@@ -6,11 +6,36 @@
 	objectVersion = 46;
 	objects = {
 
+/* Begin PBXFileReference section */
+		BF948430181830A1008A4A11 /* apodiformes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = apodiformes.h; sourceTree = "<group>"; };
+		BF948432181830A1008A4A11 /* apodiformes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = apodiformes.cpp; sourceTree = "<group>"; };
+		BF948436181832CA008A4A11 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
 /* Begin PBXGroup section */
 		BF878EB71816C4B200B6D04E = {
 			isa = PBXGroup;
 			children = (
+				BF948436181832CA008A4A11 /* Makefile */,
+				BF94842F181830A1008A4A11 /* include */,
+				BF948431181830A1008A4A11 /* src */,
 			);
+			sourceTree = "<group>";
+		};
+		BF94842F181830A1008A4A11 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				BF948430181830A1008A4A11 /* apodiformes.h */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		BF948431181830A1008A4A11 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				BF948432181830A1008A4A11 /* apodiformes.cpp */,
+			);
+			path = src;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -163,6 +188,7 @@
 				BF878EC11816C4B200B6D04E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

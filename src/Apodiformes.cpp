@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 
 	PatternModelOptions options;
 	options.DOREVERSEINDEX = true;
-	options.DOFIXEDSKIPGRAMS = true;
+	options.DOSKIPGRAMS = true;
 
 	const std::string classfile = "docs/aiw.tok.colibri.cls";
 	ClassDecoder classdecoder = ClassDecoder(classfile);
@@ -42,18 +42,18 @@ int main(int argc, char** argv)
 
 	VectorSpaceModel vsm = VectorSpaceModel();
 
-//	std::cerr << "Iterating over all patterns" << std::endl;
-//	for (IndexedPatternModel<>::iterator iter = indexedmodel.begin(); iter != indexedmodel.end(); iter++)
-//	{
-//		const Pattern pattern = iter->first;
-//		const IndexedData data = iter->second;
-//
-//		double value = indexedmodel.occurrencecount(pattern);
-//		vsm.insert(pattern, value);
-//
-////		std::cout << ">" << pattern.tostring(classdecoder) << "," << vsm[pattern] << std::endl;
-//
-//	}
+	std::cerr << "Iterating over all patterns" << std::endl;
+	for (IndexedPatternModel<>::iterator iter = indexedmodel.begin(); iter != indexedmodel.end(); iter++)
+	{
+		const Pattern pattern = iter->first;
+		const IndexedData data = iter->second;
+
+		double value = indexedmodel.occurrencecount(pattern);
+		vsm.insert(pattern, value);
+
+		std::cout << ">" << pattern.tostring(classdecoder) << "," << vsm[pattern] << std::endl;
+
+	}
 
 	std::cout << "ALS EEN REIGER" << std::endl;
 }

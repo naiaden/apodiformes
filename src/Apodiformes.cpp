@@ -51,9 +51,10 @@ int main(int argc, char** argv)
 		const IndexedData data = iter->second;
 
 		double value = collectionIndexedModel.occurrencecount(pattern);
-		vsm.insert(pattern, value);
+//		vsm.insert(pattern, value);
 
-		std::cout << ">" << pattern.tostring(collectionClassDecoder) << "," << vsm[pattern] << std::endl;
+		std::cout << ">" << pattern.tostring(collectionClassDecoder) << "," << value << std::endl;
+//		std::cout << ">" << pattern.tostring(collectionClassDecoder) << "," << vsm[pattern] << std::endl;
 
 	}
 
@@ -85,9 +86,9 @@ int main(int argc, char** argv)
 			const IndexedData data = iter->second;
 
 			double value = documentModel.occurrencecount(pattern);
-			vsm.insert(pattern, value);
+//			vsm.insert(pattern, value);
 
-			std::cout << "-" << pattern.tostring(documentClassDecoder) << "," << vsm[pattern] << std::endl;
+			std::cout << "-" << pattern.tostring(documentClassDecoder) << "," << value << std::endl;
 
 		}
 		std::cout << std::endl;

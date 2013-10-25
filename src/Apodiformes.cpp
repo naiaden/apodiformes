@@ -21,24 +21,19 @@ int main(int argc, char** argv)
 {
 	std::cout << "STRAK" << std::endl;
 
-
-
 	std::cerr << "Class encoding corpus..." << std::endl;
-	system("colibri-classencode /tmp/hamlet.txt");
-
-//	std::cerr << "Class decoding corpus..." << std::endl;
-//	system("colibri-classdecode -c /tmp/hamlet.colibri.cls -f /tmp/hamlet.colibri.dat");
+	system("colibri-classencode docs/aiw.tok");
 
 	PatternModelOptions options;
 	options.DOREVERSEINDEX = true;
 	options.DOFIXEDSKIPGRAMS = true;
 
-	const std::string classfile = "/tmp/hamlet.colibri.cls";
+	const std::string classfile = "docs/aiw.tok.colibri.cls";
 	ClassDecoder classdecoder = ClassDecoder(classfile);
 	ClassEncoder classencoder = ClassEncoder(classfile);
 
-	std::string infilename = "/tmp/hamlet.colibri.dat";
-	std::string outputfilename = "/tmp/data.colibri.patternmodel";
+	std::string infilename = "docs/aiw.tok.colibri.dat";
+	std::string outputfilename = "docs/aiw.tok.colibri.patternmodel";
 
 	std::cerr << std::endl;
 	std::cerr << "Building indexed model" << std::endl;
@@ -47,18 +42,18 @@ int main(int argc, char** argv)
 
 	VectorSpaceModel vsm = VectorSpaceModel();
 
-	std::cerr << "Iterating over all patterns" << std::endl;
-	for (IndexedPatternModel<>::iterator iter = indexedmodel.begin(); iter != indexedmodel.end(); iter++)
-	{
-		const Pattern pattern = iter->first;
-		const IndexedData data = iter->second;
-
-		double value = indexedmodel.occurrencecount(pattern);
-		vsm.insert(pattern, value);
-
-		std::cout << ">" << pattern.tostring(classdecoder) << "," << vsm[pattern] << std::endl;
-
-	}
+//	std::cerr << "Iterating over all patterns" << std::endl;
+//	for (IndexedPatternModel<>::iterator iter = indexedmodel.begin(); iter != indexedmodel.end(); iter++)
+//	{
+//		const Pattern pattern = iter->first;
+//		const IndexedData data = iter->second;
+//
+//		double value = indexedmodel.occurrencecount(pattern);
+//		vsm.insert(pattern, value);
+//
+////		std::cout << ">" << pattern.tostring(classdecoder) << "," << vsm[pattern] << std::endl;
+//
+//	}
 
 	std::cout << "ALS EEN REIGER" << std::endl;
 }

@@ -30,6 +30,7 @@ int main(int argc, char** argv)
 	options.DOREVERSEINDEX = true;
 	options.DOSKIPGRAMS = true;
 	options.MINTOKENS = 1;
+	options.MAXLENGTH = 5;
 
 	const std::string collectionClassFile = "docs/aiw.tok.colibri.cls";
 

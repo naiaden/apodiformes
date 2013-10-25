@@ -29,6 +29,7 @@ int main(int argc, char** argv)
 	PatternModelOptions options;
 	options.DOREVERSEINDEX = true;
 	options.DOSKIPGRAMS = true;
+	options.MINTOKENS = 1;
 
 	const std::string collectionClassFile = "docs/aiw.tok.colibri.cls";
 
@@ -43,18 +44,18 @@ int main(int argc, char** argv)
 
 	VectorSpaceModel vsm = VectorSpaceModel();
 
-	std::cerr << "Iterating over all patterns in all docs" << std::endl;
-		for (IndexedPatternModel<>::iterator iter = collectionIndexedModel.begin(); iter != collectionIndexedModel.end(); iter++)
-		{
-			const Pattern pattern = iter->first;
-			const IndexedData data = iter->second;
+	std::cout << "Iterating over all patterns in all docs" << std::endl;
+	for (IndexedPatternModel<>::iterator iter = collectionIndexedModel.begin(); iter != collectionIndexedModel.end(); iter++)
+	{
+		const Pattern pattern = iter->first;
+		const IndexedData data = iter->second;
 
-			double value = collectionIndexedModel.occurrencecount(pattern);
-			vsm.insert(pattern, value);
+		double value = collectionIndexedModel.occurrencecount(pattern);
+		vsm.insert(pattern, value);
 
-			std::cout << ">" << pattern.tostring(collectionClassDecoder) << "," << vsm[pattern] << std::endl;
+		std::cout << ">" << pattern.tostring(collectionClassDecoder) << "," << vsm[pattern] << std::endl;
 
-		}
+	}
 
 	std::vector< std::string> documentInputFiles = std::vector< std::string>();
 	documentInputFiles.push_back(std::string("docs/aiw-1.tok"));
@@ -63,7 +64,33 @@ int main(int argc, char** argv)
 
 	BOOST_FOREACH( std::string fileName, documentInputFiles )
 	{
-		std::cout << fileName << std::endl;
+		const std::string command = std::string("colibri-classencode -c docs/aiw.tok.colibri.cls ") + fileName;
+		system( command.c_str() );
+
+		const std::string documentClassFile = fileName + ".cls";
+		const std::string inputFileName = fileName + ".colibri.dat";
+		const std::string outputFileName = fileName + ".colibri.patternmodel";
+
+		ClassDecoder documentClassDecoder = ClassDecoder(documentClassFile);
+
+
+
+		IndexedPatternModel<> documentModel;
+		documentModel.train(inputFileName, options);
+
+		std::cout << "Iterating over all patterns in " << fileName << std::endl;
+		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
+		{
+			const Pattern pattern = iter->first;
+			const IndexedData data = iter->second;
+
+			double value = documentModel.occurrencecount(pattern);
+			vsm.insert(pattern, value);
+
+			std::cout << "-" << pattern.tostring(documentClassDecoder) << "," << vsm[pattern] << std::endl;
+
+		}
+		std::cout << std::endl;
 	}
 
 	std::cout << "ALS EEN REIGER" << std::endl;

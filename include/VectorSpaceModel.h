@@ -16,6 +16,8 @@ public:
 	virtual ~VectorSpaceModel();
 
 	double updateValue(const Pattern& pattern, double newValue);
+
+	void addDocument();
 };
 
 #endif /* VECTORSPACEMODEL_H_ */

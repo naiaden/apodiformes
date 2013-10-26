@@ -7,7 +7,10 @@
 
 #include "VectorSpaceModel.h"
 
-VectorSpaceModel::VectorSpaceModel() : PatternMap<double>() {
+#include "Document.h"
+#include <boost/foreach.hpp>
+
+VectorSpaceModel::VectorSpaceModel() {
 	// TODO Auto-generated constructor stub
 
 }
@@ -16,22 +19,16 @@ VectorSpaceModel::~VectorSpaceModel() {
 	// TODO Auto-generated destructor stub
 }
 
-/**
- * If pattern exists in the vector space model, double returns the old value of pattern
- * otherwise the behaviour is undefined
- */
-double VectorSpaceModel::updateValue(const Pattern& pattern, double newValue)
+void VectorSpaceModel::addDocument(const Document& newDocument)
 {
-	 std::unordered_map<const Pattern,double>::const_iterator iter = data.find (pattern);
-
-	  if ( iter != data.end() )
-	  {
-		  double oldValue = iter->second;
-	     data[pattern] = newValue;
-
-	    return oldValue;
-	  }
-
-	return 0;
+	documents.push_back(newDocument);
 }
 
+void VectorSpaceModel::printVectorSpace()
+{
+	BOOST_FOREACH( Document d, documents)
+	{
+		d.printPatterns();
+		std::cout << std::endl;
+	}
+}

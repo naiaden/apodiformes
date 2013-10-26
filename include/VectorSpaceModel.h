@@ -9,15 +9,22 @@
 #define VECTORSPACEMODEL_H_
 
 #include <pattern.h>
+#include "Document.h"
+#include <vector>
 
-class VectorSpaceModel : public PatternMap<double> {
+class VectorSpaceModel {
+private:
+	std::vector< Document> documents;
+
 public:
 	VectorSpaceModel();
 	virtual ~VectorSpaceModel();
 
-	double updateValue(const Pattern& pattern, double newValue);
+	void addDocument(const Document& newDocument);
 
-	void addDocument();
+	void printVectorSpace();
 };
+
+
 
 #endif /* VECTORSPACEMODEL_H_ */

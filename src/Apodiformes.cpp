@@ -16,8 +16,11 @@
 #include <patternmodel.h>
 
 #include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "VectorSpaceModel.h"
+
+typedef boost::shared_ptr<ClassDecoder> ClassDecoder_ptr;
 
 int main(int argc, char** argv)
 {
@@ -34,8 +37,9 @@ int main(int argc, char** argv)
 
 	const std::string collectionClassFile = "docs/aiw.tok.colibri.cls";
 
-	ClassDecoder collectionClassDecoder = ClassDecoder(collectionClassFile);
 	ClassEncoder collectionClassEncoder = ClassEncoder(collectionClassFile);
+
+	ClassDecoder_ptr collectionClassDecoderPtr(new ClassDecoder(collectionClassFile));
 
 	std::string collectionInputFileName = "docs/aiw.tok.colibri.dat";
 	std::string collectionOutputFileName = "docs/aiw.tok.colibri.patternmodel";
@@ -54,7 +58,7 @@ int main(int argc, char** argv)
 		double value = collectionIndexedModel.occurrencecount(pattern);
 //		vsm.insert(pattern, value);
 
-		std::cout << ">" << pattern.tostring(collectionClassDecoder) << "," << value << std::endl;
+		std::cout << ">" << pattern.tostring(*collectionClassDecoderPtr) << "," << value << std::endl;
 //		std::cout << ">" << pattern.tostring(collectionClassDecoder) << "," << vsm[pattern] << std::endl;
 
 	}
@@ -64,8 +68,11 @@ int main(int argc, char** argv)
 	documentInputFiles.push_back(std::string("docs/aiw-2.tok"));
 	documentInputFiles.push_back(std::string("docs/aiw-3.tok"));
 
+	int docCntr = 0;
 	BOOST_FOREACH( std::string fileName, documentInputFiles )
 	{
+		Document document = Document(docCntr++, fileName, collectionClassDecoderPtr);
+
 		const std::string command = std::string("colibri-classencode -c docs/aiw.tok.colibri.cls ") + fileName;
 		system( command.c_str() );
 
@@ -74,8 +81,6 @@ int main(int argc, char** argv)
 		const std::string outputFileName = fileName + ".colibri.patternmodel";
 
 		ClassDecoder documentClassDecoder = ClassDecoder(documentClassFile);
-
-
 
 		IndexedPatternModel<> documentModel;
 		documentModel.train(inputFileName, options);
@@ -87,12 +92,15 @@ int main(int argc, char** argv)
 			const IndexedData data = iter->second;
 
 			double value = documentModel.occurrencecount(pattern);
-//			vsm.insert(pattern, value);
 
-			std::cout << "-" << pattern.tostring(documentClassDecoder) << "," << value << std::endl;
+			document.updateValue(pattern, value);
+
+//			std::cout << "-" << pattern.tostring(collectionClassDecoder) << "," << value << std::endl;
 
 		}
-		std::cout << std::endl;
+
+		vsm.addDocument(document);
+
 	}
 
 	std::cout << "ALS EEN REIGER" << std::endl;

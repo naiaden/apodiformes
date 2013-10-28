@@ -10,14 +10,20 @@
 
 #include <pattern.h>
 #include "Document.h"
+#include <patternmodel.h>
 #include <vector>
+
+#include <boost/shared_ptr.hpp>
 
 class VectorSpaceModel {
 private:
 	std::vector< Document> documents;
 
+	IndexedPatternModel<> patternModel;
+
 public:
 
+	IndexedPatternModel<> getPatternModel();
 
 	typedef std::vector< Document>::iterator documentItr;
 	typedef std::vector< Document>::const_iterator const_documentItr;
@@ -30,7 +36,7 @@ public:
 
 	bool documentExists(const Document& document);
 
-	VectorSpaceModel();
+	VectorSpaceModel(const IndexedPatternModel<>& patternModel);
 	virtual ~VectorSpaceModel();
 
 	void addDocument(const Document& newDocument);

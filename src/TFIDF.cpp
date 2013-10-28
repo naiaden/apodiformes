@@ -7,7 +7,7 @@
 
 #include "TFIDF.h"
 
-TFIDF::TFIDF()
+TFIDF::TFIDF(const IndexedPatternModel<>& patternModel) : VectorSpaceModel(patternModel)
 {
 	// TODO Auto-generated constructor stub
 }

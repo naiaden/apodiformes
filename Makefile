@@ -1,5 +1,5 @@
 all:
-	g++ -std=c++0x -o fly src/Apodiformes.cpp src/VectorSpaceModel.cpp src/Document.cpp src/TFIDF.cpp -I/home/lonrust/Software/apodiformes/include -I/home/lonrust/Software/colibri-core/include -L/home/lonrust/Software/colibri-core/src/.libs -lcolibricore
+	g++ -std=c++0x -o fly src/Apodiformes.cpp src/VectorSpaceModel.cpp src/Document.cpp src/TFIDF.cpp src/KneserNey.cpp -I/home/lonrust/Software/apodiformes/include -I/home/lonrust/Software/colibri-core/include -L/home/lonrust/Software/colibri-core/src/.libs -lcolibricore
 	
 clean:
 	rm *o fly

@@ -10,27 +10,33 @@
 #include "Document.h"
 #include <boost/foreach.hpp>
 
-VectorSpaceModel::VectorSpaceModel() {
+VectorSpaceModel::VectorSpaceModel(const IndexedPatternModel<>& patternModel)
+		: patternModel(patternModel)
+{
 	// TODO Auto-generated constructor stub
 
 }
 
-VectorSpaceModel::~VectorSpaceModel() {
+VectorSpaceModel::~VectorSpaceModel()
+{
 	// TODO Auto-generated destructor stub
 }
 
+IndexedPatternModel<> VectorSpaceModel::getPatternModel()
+{
+	return patternModel;
+}
 
 bool VectorSpaceModel::documentExists(const Document& document)
 {
-	BOOST_FOREACH( Document d, documents)
-		{
-		if(d == document)
-		{
-			return true;
-		}
-		}
+	BOOST_FOREACH( Document d, documents){
+	if(d == document)
+	{
+		return true;
+	}
+}
 
-	return false;
+return false;
 }
 
 void VectorSpaceModel::addDocument(const Document& newDocument)
@@ -40,11 +46,10 @@ void VectorSpaceModel::addDocument(const Document& newDocument)
 
 void VectorSpaceModel::printVectorSpace()
 {
-	BOOST_FOREACH( Document d, documents)
-	{
-		d.printPatterns();
-		std::cout << std::endl;
-	}
+	BOOST_FOREACH( Document d, documents){
+	d.printPatterns();
+	std::cout << std::endl;
+}
 }
 
 int VectorSpaceModel::numberOfDocuments()

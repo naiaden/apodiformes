@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 	IndexedPatternModel<> collectionIndexedModel;
 	collectionIndexedModel.train(collectionInputFileName, options);
 
-	TFIDF vsm = TFIDF();
+	TFIDF vsm = TFIDF(collectionIndexedModel);
 
 	std::cout << "Iterating over all patterns in all docs" << std::endl;
 	for (IndexedPatternModel<>::iterator iter = collectionIndexedModel.begin(); iter != collectionIndexedModel.end(); iter++)
@@ -103,6 +103,7 @@ int main(int argc, char** argv)
 		vsm.addDocument(document);
 
 	}
+
 
 	std::cout << "The vector space contains " << vsm.numberOfDocuments() << " documents" << std::endl;
 	for(VectorSpaceModel::documentItr docItr = vsm.begin(); docItr != vsm.end(); ++docItr)

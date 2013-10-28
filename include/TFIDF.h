@@ -19,8 +19,7 @@ class TFIDF : public VectorSpaceModel
 	int getFrequency(const Pattern& pattern, const Document& document);
 
 public:
-	TFIDF();
-	TFIDF(const VectorSpaceModel& vsm);
+	TFIDF(const IndexedPatternModel<>& patternModel);
 	virtual ~TFIDF();
 
 	double getTF(const Pattern& pattern, const Document& document);

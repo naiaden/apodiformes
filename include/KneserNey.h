@@ -17,6 +17,11 @@ private:
 	int n1, n2, n3, n4;
 
 public:
+
+	double rawProbability(const Pattern& pattern);
+	double smoothedProbability(const Pattern& pattern);
+	double getSmoothedValue(const Pattern& pattern);
+	double interpolationFactor(const Pattern& pattern);
 	KneserNey(const IndexedPatternModel<>& patternModel);
 	virtual ~KneserNey();
 

@@ -109,52 +109,6 @@ int main(int argc, char** argv)
 
 	}
 
-	std::cout << "===========================================" << std::endl;
-
-	IndexedPatternModel<> ipm = vsm.getPatternModel();
-
-	int docCntr1 = 0;
-		BOOST_FOREACH( std::string fileName, documentInputFiles )
-		{
-			Document document = Document(docCntr1++, fileName, collectionClassDecoderPtr);
-
-			const std::string command = std::string("colibri-classencode -c docs/aiw.tok.colibri.cls ") + fileName;
-			system( command.c_str() );
-
-			const std::string documentClassFile = fileName + ".cls";
-			const std::string inputFileName = fileName + ".colibri.dat";
-			const std::string outputFileName = fileName + ".colibri.patternmodel";
-
-			ClassDecoder documentClassDecoder = ClassDecoder(documentClassFile);
-
-
-
-			int k = 0;
-
-			std::cout << "Iterating over all patterns in " << fileName << std::endl;
-			for (IndexedPatternModel<>::iterator iter = ipm.begin(); iter != ipm.end(); iter++)
-			{
-				const Pattern pattern = iter->first;
-				const IndexedData data = iter->second;
-
-				double value = ipm.occurrencecount(pattern);
-
-				document.updateValue(pattern, value);
-
-	//			std::cout << "-" << document.toString(pattern) << "," << document.getValue(pattern) << std::endl;
-
-				++k;
-			}
-
-				std::cout << ">>> " << k << std::endl;
-
-		}
-
-
-
-
-
-
 
 
 
@@ -171,8 +125,8 @@ int main(int argc, char** argv)
 	}
 
 
-//	vsm.computeFrequencyStats();
-	vsm.test();
+	vsm.computeFrequencyStats();
+//	vsm.test();
 
 
 	std::cout << "ALS EEN REIGER" << std::endl;

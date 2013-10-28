@@ -56,3 +56,39 @@ int VectorSpaceModel::numberOfDocuments()
 {
 	return documents.size();
 }
+
+void VectorSpaceModel::test()
+{
+
+	PatternModelOptions options;
+		options.DOREVERSEINDEX = true;
+		options.DOSKIPGRAMS = true;
+		options.MINTOKENS = 1;
+		options.MAXLENGTH = 5;
+
+	BOOST_FOREACH( Document document, documents )
+		{
+		std::string fileName = document.getFileName();
+
+
+			int k = 0;
+
+			std::cout << "Iterating over all patterns in " << fileName << std::endl;
+			for (IndexedPatternModel<>::iterator iter = patternModel.begin(); iter != patternModel.end(); iter++)
+			{
+				const Pattern pattern = iter->first;
+				const IndexedData data = iter->second;
+
+				double value = patternModel.occurrencecount(pattern);
+
+				document.updateValue(pattern, value);
+
+	//			std::cout << "-" << document.toString(pattern) << "," << document.getValue(pattern) << std::endl;
+
+				++k;
+			}
+
+				std::cout << ">>> " << k << std::endl;
+
+		}
+}

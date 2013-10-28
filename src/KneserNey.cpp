@@ -10,7 +10,10 @@
 KneserNey::KneserNey(const IndexedPatternModel<>& patternModel)
 		: VectorSpaceModel(patternModel)
 {
-	// TODO Auto-generated constructor stub
+	n1 = 0;
+	n2 = 0;
+	n3 = 0;
+	n4 = 0;
 
 }
 
@@ -57,45 +60,51 @@ void KneserNey::computeFrequencyStats()
 {
 	int nulls = 0;
 
+	long int total = 0;
+
 	for (IndexedPatternModel<>::iterator iter = getPatternModel().begin(); iter != getPatternModel().end(); iter++)
 	{
-		unsigned char* data = iter->first.data;
-		if (data == NULL)
-		{
-			std::cout << "data is NULL" << std::endl;
-			++nulls;
-		}
-		else
-		{
-//		iter->first.out();
+		++total;
 
-			Pattern pattern = iter->first;
 
-			int value = getPatternModel().occurrencecount(pattern);
 
-			if (value < 0)
-			{
-				std::cerr << "Unvalid occurence count value " << value << std::endl;
-			}
-
-			switch (value)
-			{
-				case 0:
-					break;
-				case 1:
-					++n1;
-					break;
-				case 2:
-					++n2;
-					break;
-				default:
-					++n3;
-					break;
-			}
-		}
+//		unsigned char* data = iter->first.data;
+//		if (data == NULL)
+//		{
+//			std::cout << "data is NULL" << std::endl;
+//			++nulls;
+//		}
+//		else
+//		{
+////		iter->first.out();
+//
+//			Pattern pattern = iter->first;
+//
+//			int value = getPatternModel().occurrencecount(pattern);
+//
+//			if (value < 0)
+//			{
+//				std::cerr << "Unvalid occurence count value " << value << std::endl;
+//			}
+//
+//			switch (value)
+//			{
+//				case 0:
+//					break;
+//				case 1:
+//					++n1;
+//					break;
+//				case 2:
+//					++n2;
+//					break;
+//				default:
+//					++n3;
+//					break;
+//			}
+//		}
 	}
 
-	std::cout << "1:" << n1 << " 2:" << n2 << " 3+:" << n3 << "(" << nulls << ")" << std::endl;
+	std::cout << "[" << total << "] 1:" << n1 << " 2:" << n2 << " 3+:" << n3 << "(" << nulls << ")" << std::endl;
 }
 
 double KneserNey::y()

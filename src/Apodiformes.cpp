@@ -49,7 +49,7 @@ int main(int argc, char** argv)
 	IndexedPatternModel<> collectionIndexedModel;
 	collectionIndexedModel.train(collectionInputFileName, options);
 
-	KneserNey vsm = KneserNey(collectionIndexedModel);
+
 
 	std::cout << "Iterating over all patterns in all docs" << std::endl;
 	for (IndexedPatternModel<>::iterator iter = collectionIndexedModel.begin(); iter != collectionIndexedModel.end(); iter++)
@@ -58,12 +58,11 @@ int main(int argc, char** argv)
 		const IndexedData data = iter->second;
 
 		double value = collectionIndexedModel.occurrencecount(pattern);
-//		vsm.insert(pattern, value);
-
 		std::cout << ">" << pattern.tostring(*collectionClassDecoderPtr) << "," << value << std::endl;
-//		std::cout << ">" << pattern.tostring(collectionClassDecoder) << "," << vsm[pattern] << std::endl;
 
 	}
+
+	KneserNey vsm = KneserNey(collectionIndexedModel);
 
 	std::vector< std::string> documentInputFiles = std::vector< std::string>();
 	documentInputFiles.push_back(std::string("docs/aiw-1.tok"));
@@ -87,6 +86,8 @@ int main(int argc, char** argv)
 		IndexedPatternModel<> documentModel;
 		documentModel.train(inputFileName, options);
 
+		int k = 0;
+
 		std::cout << "Iterating over all patterns in " << fileName << std::endl;
 		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
 		{
@@ -99,11 +100,62 @@ int main(int argc, char** argv)
 
 //			std::cout << "-" << document.toString(pattern) << "," << document.getValue(pattern) << std::endl;
 
+			++k;
 		}
+
+			std::cout << ">>> " << k << std::endl;
 
 		vsm.addDocument(document);
 
 	}
+
+	std::cout << "===========================================" << std::endl;
+
+	IndexedPatternModel<> ipm = vsm.getPatternModel();
+
+	int docCntr1 = 0;
+		BOOST_FOREACH( std::string fileName, documentInputFiles )
+		{
+			Document document = Document(docCntr1++, fileName, collectionClassDecoderPtr);
+
+			const std::string command = std::string("colibri-classencode -c docs/aiw.tok.colibri.cls ") + fileName;
+			system( command.c_str() );
+
+			const std::string documentClassFile = fileName + ".cls";
+			const std::string inputFileName = fileName + ".colibri.dat";
+			const std::string outputFileName = fileName + ".colibri.patternmodel";
+
+			ClassDecoder documentClassDecoder = ClassDecoder(documentClassFile);
+
+
+
+			int k = 0;
+
+			std::cout << "Iterating over all patterns in " << fileName << std::endl;
+			for (IndexedPatternModel<>::iterator iter = ipm.begin(); iter != ipm.end(); iter++)
+			{
+				const Pattern pattern = iter->first;
+				const IndexedData data = iter->second;
+
+				double value = ipm.occurrencecount(pattern);
+
+				document.updateValue(pattern, value);
+
+	//			std::cout << "-" << document.toString(pattern) << "," << document.getValue(pattern) << std::endl;
+
+				++k;
+			}
+
+				std::cout << ">>> " << k << std::endl;
+
+		}
+
+
+
+
+
+
+
 
 
 	std::cout << "The vector space contains " << vsm.numberOfDocuments() << " documents" << std::endl;
@@ -119,7 +171,8 @@ int main(int argc, char** argv)
 	}
 
 
-	vsm.computeFrequencyStats();
+//	vsm.computeFrequencyStats();
+	vsm.test();
 
 
 	std::cout << "ALS EEN REIGER" << std::endl;

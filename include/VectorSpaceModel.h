@@ -23,6 +23,7 @@ private:
 
 public:
 
+	void test();
 	IndexedPatternModel<> getPatternModel();
 
 	typedef std::vector< Document>::iterator documentItr;

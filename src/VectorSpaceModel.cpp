@@ -19,6 +19,20 @@ VectorSpaceModel::~VectorSpaceModel() {
 	// TODO Auto-generated destructor stub
 }
 
+
+bool VectorSpaceModel::documentExists(const Document& document)
+{
+	BOOST_FOREACH( Document d, documents)
+		{
+		if(d == document)
+		{
+			return true;
+		}
+		}
+
+	return false;
+}
+
 void VectorSpaceModel::addDocument(const Document& newDocument)
 {
 	documents.push_back(newDocument);

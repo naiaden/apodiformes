@@ -7,13 +7,21 @@
 
 #include "Document.h"
 
-
-
 #include <boost/foreach.hpp>
 
 typedef std::unordered_map<const Pattern, double> umap;
 
-Document::Document(int documentId, const std::string& fileName,  boost::shared_ptr<ClassDecoder> classDe1coder)
+int Document::getDocumentId()
+{
+	return documentId;
+}
+
+std::string Document::getFileName()
+{
+	return fileName;
+}
+
+Document::Document(int documentId, const std::string& fileName, boost::shared_ptr<ClassDecoder> classDe1coder)
 {
 	// TODO Auto-generated constructor stub
 	this->documentId = documentId;
@@ -29,17 +37,17 @@ Document::~Document()
 /**
  * returns 0 if the pattern does not exist in the document
  */
-double Document::getValue(const Pattern& pattern)
+double Document::getValue(const Pattern& pattern) const
 {
-	std::unordered_map<const Pattern,double>::const_iterator iter = data.find (pattern);
+	std::unordered_map<const Pattern, double>::const_iterator iter = data.find(pattern);
 
-	if ( iter != data.end() )
-		  {
+	if (iter != data.end())
+	{
 
-		    return iter->second;
-		  }
+		return iter->second;
+	}
 
-		return 0;
+	return 0;
 }
 
 /**
@@ -48,30 +56,30 @@ double Document::getValue(const Pattern& pattern)
  */
 double Document::updateValue(const Pattern& pattern, double newValue)
 {
-	 std::unordered_map<const Pattern,double>::const_iterator iter = data.find (pattern);
+	std::unordered_map<const Pattern, double>::const_iterator iter = data.find(pattern);
 
-	  if ( iter != data.end() )
-	  {
-		  double oldValue = iter->second;
-	     data[pattern] = newValue;
+	if (iter != data.end())
+	{
+		double oldValue = iter->second;
+		data[pattern] = newValue;
 
-	    return oldValue;
-	  }
+		return oldValue;
+	}
 
-	  data[pattern] = newValue;
-	  return 0;
+	data[pattern] = newValue;
+	return 0;
 }
 
 void Document::printPatterns()
 {
 	std::cout << "(" << documentId << " --- " << fileName << ")" << std::endl;
-	BOOST_FOREACH( umap::value_type v, data ) {
-		Pattern p = v.first;
-	    std::cout << "[" << p.tostring(*classDecoder) << "]" << v.second << std::endl;
-	}
+	BOOST_FOREACH( umap::value_type v, data ){
+	Pattern p = v.first;
+	std::cout << "[" << p.tostring(*classDecoder) << "]" << v.second << std::endl;
+}
 }
 
-boost::shared_ptr< ClassDecoder> Document::getClassDecoder()
+boost::shared_ptr<ClassDecoder> Document::getClassDecoder()
 {
 	return classDecoder;
 }
@@ -104,4 +112,18 @@ std::string Document::toString()
 	ss << "(" << documentId << ") - " << fileName;
 
 	return ss.str();
+}
+
+bool operator==(const Document& lhs, const Document& rhs)
+{
+	if (lhs.documentId == rhs.documentId && lhs.fileName == rhs.fileName)
+	{
+		return true;
+	}
+	return false;
+}
+
+bool operator!=(const Document& lhs, const Document& rhs)
+{
+	return !(lhs == rhs);
 }

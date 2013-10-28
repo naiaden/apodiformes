@@ -28,6 +28,8 @@ public:
 	const_documentItr end() const { return documents.end(); }
 
 
+	bool documentExists(const Document& document);
+
 	VectorSpaceModel();
 	virtual ~VectorSpaceModel();
 

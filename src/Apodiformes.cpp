@@ -19,6 +19,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "VectorSpaceModel.h"
+#include "KneserNey.h"
 #include "TFIDF.h"
 
 typedef boost::shared_ptr<ClassDecoder> ClassDecoder_ptr;
@@ -48,7 +49,7 @@ int main(int argc, char** argv)
 	IndexedPatternModel<> collectionIndexedModel;
 	collectionIndexedModel.train(collectionInputFileName, options);
 
-	TFIDF vsm = TFIDF(collectionIndexedModel);
+	KneserNey vsm = KneserNey(collectionIndexedModel);
 
 	std::cout << "Iterating over all patterns in all docs" << std::endl;
 	for (IndexedPatternModel<>::iterator iter = collectionIndexedModel.begin(); iter != collectionIndexedModel.end(); iter++)
@@ -112,13 +113,13 @@ int main(int argc, char** argv)
 		boost::shared_ptr< ClassDecoder> decoder = docItr->getClassDecoder();
 		for(Document::featureItr featItr = docItr->begin(); featItr != docItr->end(); ++featItr)
 		{
-			std::cout << docItr->toString(featItr) << "[" << vsm.getTFIDF(featItr->first, *docItr) << "]" << std::endl;
+//			std::cout << docItr->toString(featItr) << "[" << vsm.getTFIDF(featItr->first, *docItr) << "]" << std::endl;
 		}
 		std::cout << std::endl;
 	}
 
 
-
+	vsm.computeFrequencyStats();
 
 
 	std::cout << "ALS EEN REIGER" << std::endl;

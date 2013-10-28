@@ -7,7 +7,8 @@
 
 #include "KneserNey.h"
 
-KneserNey::KneserNey(const IndexedPatternModel<>& patternModel) : VectorSpaceModel(patternModel)
+KneserNey::KneserNey(const IndexedPatternModel<>& patternModel)
+		: VectorSpaceModel(patternModel)
 {
 	// TODO Auto-generated constructor stub
 
@@ -54,31 +55,47 @@ int KneserNey::patternCount(const Pattern& pattern)
  */
 void KneserNey::computeFrequencyStats()
 {
+	int nulls = 0;
+
 	for (IndexedPatternModel<>::iterator iter = getPatternModel().begin(); iter != getPatternModel().end(); iter++)
 	{
-		const Pattern pattern = iter->first;
+		unsigned char* data = iter->first.data;
+		if (data == NULL)
+		{
+			std::cout << "data is NULL" << std::endl;
+			++nulls;
+		}
+		else
+		{
+//		iter->first.out();
 
-		int value = getPatternModel().occurrencecount(pattern);
+			Pattern pattern = iter->first;
 
-		if (value < 0)
+			int value = getPatternModel().occurrencecount(pattern);
+
+			if (value < 0)
 			{
 				std::cerr << "Unvalid occurence count value " << value << std::endl;
 			}
 
-		switch (value) {
-			case 0:
-				break;
-			case 1:
-				++n1;
-				break;
-			case 2:
-				++n2;
-				break;
-			default:
-				++n3;
-				break;
+			switch (value)
+			{
+				case 0:
+					break;
+				case 1:
+					++n1;
+					break;
+				case 2:
+					++n2;
+					break;
+				default:
+					++n3;
+					break;
+			}
 		}
 	}
+
+	std::cout << "1:" << n1 << " 2:" << n2 << " 3+:" << n3 << "(" << nulls << ")" << std::endl;
 }
 
 double KneserNey::y()

@@ -27,8 +27,24 @@ Document::~Document()
 }
 
 /**
+ * returns 0 if the pattern does not exist in the document
+ */
+double Document::getValue(const Pattern& pattern)
+{
+	std::unordered_map<const Pattern,double>::const_iterator iter = data.find (pattern);
+
+	if ( iter != data.end() )
+		  {
+
+		    return iter->second;
+		  }
+
+		return 0;
+}
+
+/**
  * If pattern exists in the document, double returns the old value of pattern
- * otherwise the behaviour is undefined
+ * otherwise the pattern is added with newValue, and 0 is returned.
  */
 double Document::updateValue(const Pattern& pattern, double newValue)
 {
@@ -42,7 +58,8 @@ double Document::updateValue(const Pattern& pattern, double newValue)
 	    return oldValue;
 	  }
 
-	return 0;
+	  data[pattern] = newValue;
+	  return 0;
 }
 
 void Document::printPatterns()
@@ -52,4 +69,39 @@ void Document::printPatterns()
 		Pattern p = v.first;
 	    std::cout << "[" << p.tostring(*classDecoder) << "]" << v.second << std::endl;
 	}
+}
+
+boost::shared_ptr< ClassDecoder> Document::getClassDecoder()
+{
+	return classDecoder;
+}
+
+std::string Document::toString(const Pattern& pattern)
+{
+	std::stringstream ss;
+
+	ss << pattern.tostring(*classDecoder);
+
+	return ss.str();
+}
+
+std::string Document::toString(featureItr featItr)
+{
+	std::stringstream ss;
+
+	Pattern p = featItr->first;
+	double v = featItr->second;
+
+	ss << p.tostring(*classDecoder) << " (" << v << ")";
+
+	return ss.str();
+}
+
+std::string Document::toString()
+{
+	std::stringstream ss;
+
+	ss << "(" << documentId << ") - " << fileName;
+
+	return ss.str();
 }

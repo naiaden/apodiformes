@@ -32,3 +32,8 @@ void VectorSpaceModel::printVectorSpace()
 		std::cout << std::endl;
 	}
 }
+
+int VectorSpaceModel::numberOfDocuments()
+{
+	return documents.size();
+}

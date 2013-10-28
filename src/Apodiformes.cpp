@@ -95,12 +95,24 @@ int main(int argc, char** argv)
 
 			document.updateValue(pattern, value);
 
-//			std::cout << "-" << pattern.tostring(collectionClassDecoder) << "," << value << std::endl;
+//			std::cout << "-" << document.toString(pattern) << "," << document.getValue(pattern) << std::endl;
 
 		}
 
 		vsm.addDocument(document);
 
+	}
+
+	std::cout << "The vector space contains " << vsm.numberOfDocuments() << " documents" << std::endl;
+	for(VectorSpaceModel::documentItr docItr = vsm.begin(); docItr != vsm.end(); ++docItr)
+	{
+		std::cout << docItr->toString() << std::endl;
+		boost::shared_ptr< ClassDecoder> decoder = docItr->getClassDecoder();
+		for(Document::featureItr featItr = docItr->begin(); featItr != docItr->end(); ++featItr)
+		{
+			std::cout << docItr->toString(featItr) << std::endl;
+		}
+		std::cout << std::endl;
 	}
 
 	std::cout << "ALS EEN REIGER" << std::endl;

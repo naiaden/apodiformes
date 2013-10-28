@@ -17,12 +17,25 @@ private:
 	std::vector< Document> documents;
 
 public:
+
+
+	typedef std::vector< Document>::iterator documentItr;
+	typedef std::vector< Document>::const_iterator const_documentItr;
+
+	documentItr begin() { return documents.begin(); }
+	const_documentItr begin() const { return documents.begin(); }
+	documentItr end() { return documents.end(); }
+	const_documentItr end() const { return documents.end(); }
+
+
 	VectorSpaceModel();
 	virtual ~VectorSpaceModel();
 
 	void addDocument(const Document& newDocument);
 
 	void printVectorSpace();
+
+	int numberOfDocuments();
 };
 
 

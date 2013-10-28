@@ -60,7 +60,7 @@ public:
 
 	void printPatterns();
 
-	std::string toString(const Pattern& pattern);
+	std::string toString(const Pattern& pattern) const;
 	std::string toString(featureItr featItr);
 	std::string toString();
 };

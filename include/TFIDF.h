@@ -23,9 +23,9 @@ public:
 	TFIDF(const VectorSpaceModel& vsm);
 	virtual ~TFIDF();
 
-	int getTF(const Pattern& pattern, const Document& document);
+	double getTF(const Pattern& pattern, const Document& document);
 	double getIDF(const Pattern& pattern);
-	double getTFIDF(const Pattern& pattern);
+	double getTFIDF(const Pattern& pattern, const Document& document);
 };
 
 #endif /* TFIDF_H_ */

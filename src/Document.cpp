@@ -84,7 +84,7 @@ boost::shared_ptr<ClassDecoder> Document::getClassDecoder()
 	return classDecoder;
 }
 
-std::string Document::toString(const Pattern& pattern)
+std::string Document::toString(const Pattern& pattern) const
 {
 	std::stringstream ss;
 

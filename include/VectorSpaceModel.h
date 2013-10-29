@@ -13,13 +13,18 @@
 #include <patternmodel.h>
 #include <vector>
 
+#include <classdecoder.h>
+
 #include <boost/shared_ptr.hpp>
 
 class VectorSpaceModel {
 private:
 	std::vector< Document> documents;
 
+
 	IndexedPatternModel<> patternModel;
+protected:
+	boost::shared_ptr<ClassDecoder> classDecoder;
 
 public:
 
@@ -37,7 +42,7 @@ public:
 
 	bool documentExists(const Document& document);
 
-	VectorSpaceModel(const IndexedPatternModel<>& patternModel);
+	VectorSpaceModel(const IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder);
 	virtual ~VectorSpaceModel();
 
 	void addDocument(const Document& newDocument);

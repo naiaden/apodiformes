@@ -10,8 +10,8 @@
 #include "Document.h"
 #include <boost/foreach.hpp>
 
-VectorSpaceModel::VectorSpaceModel(const IndexedPatternModel<>& patternModel)
-		: patternModel(patternModel)
+VectorSpaceModel::VectorSpaceModel(const IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder)
+		: patternModel(patternModel), classDecoder(classDecoder)
 {
 	// TODO Auto-generated constructor stub
 

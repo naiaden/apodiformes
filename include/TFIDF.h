@@ -19,15 +19,15 @@
 class TFIDF: public VectorSpaceModel
 {
 public:
-	TFIDF(const IndexedPatternModel<>& patternModel);
-
+	TFIDF(const IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder);
+	virtual ~TFIDF();
 	double getTFIDF(const Pattern& pattern, const Document& document);
 
 private:
 	int getFrequency(const Pattern& pattern);
 	int getFrequency(const Pattern& pattern, const Document& document);
 
-	virtual ~TFIDF();
+
 
 	double getTF(const Pattern& pattern, const Document& document);
 	double getIDF(const Pattern& pattern);

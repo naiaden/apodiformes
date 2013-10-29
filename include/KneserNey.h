@@ -16,25 +16,28 @@ class KneserNey: public VectorSpaceModel
 private:
 	int n1, n2, n3, n4;
 
-public:
 
 
-	double rawProbability(const Pattern& pattern);
-	double smoothedProbability(const Pattern& pattern);
-	double getSmoothedValue(const Pattern& pattern);
-	double interpolationFactor(const Pattern& pattern);
-	double N(const Pattern& pattern);
+	double rawProbability(const Pattern& pattern, int indentation = 0);
+	double smoothedProbability(const Pattern& pattern, int indentation = 0);
 
-	KneserNey(const IndexedPatternModel<>& patternModel);
-	virtual ~KneserNey();
-
-	void computeFrequencyStats();
+	double interpolationFactor(const Pattern& pattern, int indentation = 0);
+	double N(const Pattern& pattern, int& N1, int& N2, int& N3);
 
 	double wordChanceForOrder(const Pattern& pattern, int order);
 	int patternCount(const Pattern& pattern);
 	double discount(int count);
 
 	double y();
+
+public:
+
+	KneserNey(const IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder);
+	virtual ~KneserNey();
+	double getSmoothedValue(const Pattern& pattern, int indentation =0);
+
+	void computeFrequencyStats();
+
 };
 
 #endif /* KNESERNEY_H_ */

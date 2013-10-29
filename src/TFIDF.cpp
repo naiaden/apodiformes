@@ -12,8 +12,8 @@
 
 typedef boost::shared_ptr<ClassDecoder> ClassDecoder_ptr;
 
-TFIDF::TFIDF(const IndexedPatternModel<>& patternModel)
-		: VectorSpaceModel(patternModel)
+TFIDF::TFIDF(const IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder)
+		: VectorSpaceModel(patternModel, classDecoder)
 {
 
 }
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
 
 	}
 
-	TFIDF vsm = TFIDF(collectionIndexedModel);
+	TFIDF vsm = TFIDF(collectionIndexedModel, collectionClassDecoderPtr);
 
 	std::vector<std::string> documentInputFiles = std::vector<std::string>();
 	documentInputFiles.push_back(std::string("docs/aiw-1.tok"));

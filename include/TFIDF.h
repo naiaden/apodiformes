@@ -12,19 +12,26 @@
 #include "Document.h"
 #include "VectorSpaceModel.h"
 
-class TFIDF : public VectorSpaceModel
+/**
+ * tf-idf is computed using a log-scaled frequency over the term frequency and
+ * a log-scaled inverse document frequency.
+ */
+class TFIDF: public VectorSpaceModel
 {
-	private:
+public:
+	TFIDF(const IndexedPatternModel<>& patternModel);
+
+	double getTFIDF(const Pattern& pattern, const Document& document);
+
+private:
 	int getFrequency(const Pattern& pattern);
 	int getFrequency(const Pattern& pattern, const Document& document);
 
-public:
-	TFIDF(const IndexedPatternModel<>& patternModel);
 	virtual ~TFIDF();
 
 	double getTF(const Pattern& pattern, const Document& document);
 	double getIDF(const Pattern& pattern);
-	double getTFIDF(const Pattern& pattern, const Document& document);
+
 };
 
 #endif /* TFIDF_H_ */

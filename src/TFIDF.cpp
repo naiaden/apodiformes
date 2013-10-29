@@ -7,9 +7,23 @@
 
 #include "TFIDF.h"
 
-TFIDF::TFIDF(const IndexedPatternModel<>& patternModel) : VectorSpaceModel(patternModel)
+#include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
+
+typedef boost::shared_ptr<ClassDecoder> ClassDecoder_ptr;
+
+TFIDF::TFIDF(const IndexedPatternModel<>& patternModel)
+		: VectorSpaceModel(patternModel)
 {
-	// TODO Auto-generated constructor stub
+
+}
+
+double TFIDF::getTFIDF(const Pattern& pattern, const Document& document)
+{
+	double tf = getTF(pattern, document);
+	double idf = getIDF(pattern);
+
+	return tf * idf;
 }
 
 TFIDF::~TFIDF()
@@ -49,7 +63,7 @@ double TFIDF::getTF(const Pattern& pattern, const Document& document)
 double TFIDF::getIDF(const Pattern& pattern)
 {
 	const int numberOfDocuments = this->numberOfDocuments();
-	int numberOfDocumentsWithPattern = 0;
+	double numberOfDocumentsWithPattern = 0.0;
 
 	for (documentItr docItr = begin(); docItr != end(); ++docItr)
 	{
@@ -59,13 +73,103 @@ double TFIDF::getIDF(const Pattern& pattern)
 		}
 	}
 
-	return numberOfDocuments / numberOfDocumentsWithPattern;
+	return log(numberOfDocuments / numberOfDocumentsWithPattern);
 }
 
-double TFIDF::getTFIDF(const Pattern& pattern, const Document& document)
+int main(int argc, char** argv)
 {
-	double tf = getTF(pattern, document);
-	double idf = getIDF(pattern);
+	std::cout << "STRAK" << std::endl;
 
-	return tf * idf;
+	std::cerr << "Class encoding corpus..." << std::endl;
+	system("colibri-classencode docs/aiw.tok");
+
+	PatternModelOptions options;
+	options.DOREVERSEINDEX = true;
+	options.DOSKIPGRAMS = true;
+	options.MINTOKENS = 1;
+	options.MAXLENGTH = 5;
+
+	const std::string collectionClassFile = "docs/aiw.tok.colibri.cls";
+
+	ClassEncoder collectionClassEncoder = ClassEncoder(collectionClassFile);
+
+	ClassDecoder_ptr collectionClassDecoderPtr(new ClassDecoder(collectionClassFile));
+
+	std::string collectionInputFileName = "docs/aiw.tok.colibri.dat";
+	std::string collectionOutputFileName = "docs/aiw.tok.colibri.patternmodel";
+
+	IndexedPatternModel<> collectionIndexedModel;
+	collectionIndexedModel.train(collectionInputFileName, options);
+
+	std::cout << "Iterating over all patterns in all docs" << std::endl;
+	for (IndexedPatternModel<>::iterator iter = collectionIndexedModel.begin(); iter != collectionIndexedModel.end();
+	        iter++)
+	{
+		const Pattern pattern = iter->first;
+		const IndexedData data = iter->second;
+
+		double value = collectionIndexedModel.occurrencecount(pattern);
+		std::cout << ">" << pattern.tostring(*collectionClassDecoderPtr) << "," << value << std::endl;
+
+	}
+
+	TFIDF vsm = TFIDF(collectionIndexedModel);
+
+	std::vector<std::string> documentInputFiles = std::vector<std::string>();
+	documentInputFiles.push_back(std::string("docs/aiw-1.tok"));
+	documentInputFiles.push_back(std::string("docs/aiw-2.tok"));
+	documentInputFiles.push_back(std::string("docs/aiw-3.tok"));
+
+	int docCntr = 0;
+	BOOST_FOREACH( std::string fileName, documentInputFiles ){
+	Document document = Document(docCntr++, fileName, collectionClassDecoderPtr);
+
+	const std::string command = std::string("colibri-classencode -c docs/aiw.tok.colibri.cls ") + fileName;
+	system( command.c_str() );
+
+	const std::string documentClassFile = fileName + ".cls";
+	const std::string inputFileName = fileName + ".colibri.dat";
+	const std::string outputFileName = fileName + ".colibri.patternmodel";
+
+	ClassDecoder documentClassDecoder = ClassDecoder(documentClassFile);
+
+	IndexedPatternModel<> documentModel;
+	documentModel.train(inputFileName, options);
+
+	int k = 0;
+
+	std::cout << "Iterating over all patterns in " << fileName << std::endl;
+	for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
+	{
+		const Pattern pattern = iter->first;
+		const IndexedData data = iter->second;
+
+		double value = documentModel.occurrencecount(pattern);
+
+		document.updateValue(pattern, value);
+
+//			std::cout << "-" << document.toString(pattern) << "," << document.getValue(pattern) << std::endl;
+
+		++k;
+	}
+
+	std::cout << ">>> " << k << std::endl;
+
+	vsm.addDocument(document);
+
+}
+
+	std::cout << "The vector space contains " << vsm.numberOfDocuments() << " documents" << std::endl;
+	for (VectorSpaceModel::documentItr docItr = vsm.begin(); docItr != vsm.end(); ++docItr)
+	{
+		std::cout << docItr->toString() << std::endl;
+		boost::shared_ptr<ClassDecoder> decoder = docItr->getClassDecoder();
+		for (Document::featureItr featItr = docItr->begin(); featItr != docItr->end(); ++featItr)
+		{
+			std::cout << docItr->toString(featItr) << "[" << vsm.getTFIDF(featItr->first, *docItr) << "]" << std::endl;
+		}
+		std::cout << std::endl;
+	}
+
+	std::cout << "ALS EEN REIGER" << std::endl;
 }

@@ -71,9 +71,9 @@ int main(int argc, char** argv)
 
 	ColibriFile collectionCorpusFile = ColibriFile(collectionName, "colibri.cls", generatedDirectory, ColibriFile::Type::CORPUS);
 	ColibriFile collectionEncodedFile = ColibriFile(collectionName, "colibri.dat", generatedDirectory, ColibriFile::Type::ENCODED); //collectionInputFileName
-	ColibriFile collectionPatternFile = ColibriFile(collectionName, "colibri.dat", generatedDirectory, ColibriFile::Type::PATTERNMODEL); //collectionOutputFileName
+	ColibriFile collectionPatternFile = ColibriFile(collectionName, "colibri.pattern", generatedDirectory, ColibriFile::Type::PATTERNMODEL); //collectionOutputFileName
 
-	std::string collectionClassEncodeCommand = std::string("colibri-classencode -o ").append(collectionCorpusFile.getPath(false)).append(" -u ").append(allFileNames);
+	std::string collectionClassEncodeCommand = std::string("colibri-classencode") + " -d " + generatedDirectory + " -o " + collectionCorpusFile.getFileName(false) + " -u " + allFileNames;
 	std::cout << "Executing command: " << collectionClassEncodeCommand << std::endl;
 	system(collectionClassEncodeCommand.c_str());
 
@@ -100,29 +100,34 @@ int main(int argc, char** argv)
 		std::cout << std::string(indentation++, '\t') << "+ " << tf.getPath() << std::endl;
 		std::cout << std::string(indentation, '\t') << "Encoding document" << std::endl;
 		Document document = Document(docCntr++, tf.getPath(), collectionClassDecoderPtr);
+
+
+		ColibriFile documentCorpusFile = ColibriFile(tf.getFileName(false), "colibri.cls", generatedDirectory, ColibriFile::Type::CORPUS); //documentClassFile
+		ColibriFile documentEncodedFile = ColibriFile(tf.getFileName(false), "colibri.dat", generatedDirectory, ColibriFile::Type::ENCODED); //inputFileName
+		ColibriFile documentPatternFile = ColibriFile(tf.getFileName(false), "colibri.pattern", generatedDirectory, ColibriFile::Type::PATTERNMODEL);
+
+		const std::string command = std::string("colibri-classencode") + " -d " + generatedDirectory + " -o " + documentCorpusFile.getFileName(false) + " -c " + collectionCorpusFile.getPath() + " " + tf.getPath();
+		std::cout << "Executing command: " << command << std::endl;
+		system( command.c_str() );
+
+
+
+
+		IndexedPatternModel<> documentModel;
+		documentModel.train(documentEncodedFile.getPath(), options);
+
+		std::cout << std::string(indentation, '\t') << "Iterating over all patterns" << std::endl;
+		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
+		{
+			const Pattern pattern = iter->first;
+			const IndexedData data = iter->second;
+
+			double value = documentModel.occurrencecount(pattern);
+
+			document.updateValue(pattern, value);
+		}
 //
-//		const std::string command = std::string("colibri-classencode -o ") + generatedDirectory + fileName + " -c " + generatedDirectory + "collection.colibri.cls " + inputDirectory + fileName;
-//		std::cout << "Executing command: " << command << std::endl;
-//		system( command.c_str() );
-//
-//		const std::string documentClassFile = generatedDirectory + fileName + ".cls";
-//		const std::string inputFileName = generatedDirectory + fileName + ".colibri.dat";
-//
-//		IndexedPatternModel<> documentModel;
-//		documentModel.train(inputFileName, options);
-//
-//		std::cout << std::string(indentation, '\t') << "Iterating over all patterns" << std::endl;
-//		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
-//		{
-//			const Pattern pattern = iter->first;
-//			const IndexedData data = iter->second;
-//
-//			double value = documentModel.occurrencecount(pattern);
-//
-//			document.updateValue(pattern, value);
-//		}
-////
-////		trainLanguageModel.addDocument(document);
+//		trainLanguageModel.addDocument(document);
 
 		std::cout << std::string(--indentation, '\t') << "- " << tf.getPath() << std::endl;
 	}

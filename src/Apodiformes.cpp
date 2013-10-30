@@ -97,26 +97,26 @@ int main(int argc, char** argv)
 		std::cout << std::string(indentation, '\t') << "Encoding document" << std::endl;
 		Document document = Document(docCntr++, fileName, collectionClassDecoderPtr);
 
-		const std::string command = std::string("colibri-classencode -o ") + generatedDirectory + fileName + "-c " + generatedDirectory + "collection.colibri.cls " + inputDirectory + fileName;
+		const std::string command = std::string("colibri-classencode -o ") + generatedDirectory + fileName + " -c " + generatedDirectory + "collection.colibri.cls " + inputDirectory + fileName;
+		std::cout << "Executing command: " << command << std::endl;
 		system( command.c_str() );
 
-//		const std::string documentClassFile = fileName + ".cls";
-//		const std::string inputFileName = fileName + ".colibri.dat";
-//		const std::string outputFileName = fileName + ".colibri.patternmodel";
-//
-//		IndexedPatternModel<> documentModel;
-//		documentModel.train(inputFileName, options);
-//
-//		std::cout << std::string(indentation, '\t') << "Iterating over all patterns" << std::endl;
-//		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
-//		{
-//			const Pattern pattern = iter->first;
-//			const IndexedData data = iter->second;
-//
-//			double value = documentModel.occurrencecount(pattern);
-//
-//			document.updateValue(pattern, value);
-//		}
+		const std::string documentClassFile = generatedDirectory + fileName + ".cls";
+		const std::string inputFileName = generatedDirectory + fileName + ".colibri.dat";
+
+		IndexedPatternModel<> documentModel;
+		documentModel.train(inputFileName, options);
+
+		std::cout << std::string(indentation, '\t') << "Iterating over all patterns" << std::endl;
+		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
+		{
+			const Pattern pattern = iter->first;
+			const IndexedData data = iter->second;
+
+			double value = documentModel.occurrencecount(pattern);
+
+			document.updateValue(pattern, value);
+		}
 //
 //		trainLanguageModel.addDocument(document);
 

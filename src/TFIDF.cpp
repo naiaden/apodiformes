@@ -26,6 +26,12 @@ double TFIDF::getTFIDF(const Pattern& pattern, const Document& document)
 	return tf * idf;
 }
 
+double TFIDF::computeSimularity(const Document& document)
+{
+	std::cerr << "TFIDF::computeSimularity is unimplemented" << std::endl;
+	return 4.0;
+}
+
 TFIDF::~TFIDF()
 {
 	// TODO Auto-generated destructor stub
@@ -76,7 +82,7 @@ double TFIDF::getIDF(const Pattern& pattern)
 	return log(numberOfDocuments / numberOfDocumentsWithPattern);
 }
 
-int main(int argc, char** argv)
+int main1(int argc, char** argv)
 {
 	std::cout << "STRAK" << std::endl;
 

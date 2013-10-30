@@ -33,6 +33,7 @@ public:
 	double getSmoothedValue(const Pattern& pattern, int indentation = 0);
 
 	void computeFrequencyStats();
+	double computeSimularity(const Document& document);
 
 private:
 	double n1, n2, n3, n4;

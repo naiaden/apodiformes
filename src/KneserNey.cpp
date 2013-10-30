@@ -10,11 +10,6 @@
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 
-typedef boost::shared_ptr<ClassDecoder> ClassDecoder_ptr;
-
-
-
-
 KneserNey::KneserNey(const IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder, Modification algorithm )
 		: VectorSpaceModel(patternModel, classDecoder), algorithm(algorithm)
 {
@@ -23,6 +18,12 @@ KneserNey::KneserNey(const IndexedPatternModel<>& patternModel, boost::shared_pt
 	n3 = 0;
 	n4 = 0;
 
+}
+
+double KneserNey::computeSimularity(const Document& document)
+{
+	std::cerr << "KneserNey::computeSimularity is unimplemented" << std::endl;
+	return 4.0;
 }
 
 /**
@@ -288,7 +289,7 @@ double KneserNey::discount(int count)
 	}
 }
 
-int main(int argc, char** argv)
+int main1(int argc, char** argv)
 {
 	std::cout << "STRAK" << std::endl;
 
@@ -305,7 +306,7 @@ int main(int argc, char** argv)
 
 	ClassEncoder collectionClassEncoder = ClassEncoder(collectionClassFile);
 
-	ClassDecoder_ptr collectionClassDecoderPtr(new ClassDecoder(collectionClassFile));
+	boost::shared_ptr<ClassDecoder> collectionClassDecoderPtr(new ClassDecoder(collectionClassFile));
 
 	std::string collectionInputFileName = "docs/aiw.tok.colibri.dat";
 	std::string collectionOutputFileName = "docs/aiw.tok.colibri.patternmodel";

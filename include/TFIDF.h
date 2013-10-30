@@ -23,6 +23,8 @@ public:
 	virtual ~TFIDF();
 	double getTFIDF(const Pattern& pattern, const Document& document);
 
+	double computeSimularity(const Document& document);
+
 private:
 	int getFrequency(const Pattern& pattern);
 	int getFrequency(const Pattern& pattern, const Document& document);

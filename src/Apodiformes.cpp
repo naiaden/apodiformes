@@ -22,36 +22,39 @@
 #include "VectorSpaceModel.h"
 #include "KneserNey.h"
 #include "TFIDF.h"
+#include "File.h"
 
 int main(int argc, char** argv)
 {
 	std::cout << "STRAK" << std::endl;
 
-	const std::string inputDirectory = "docs/alice/";
-	const std::string generatedDirectory = "docs/generated/";
+	const std::string inputDirectory = "docs/alice";
+	const std::string generatedDirectory = "docs/generated";
+	const std::string collectionName = "alice";
 
-	std::vector<std::string> trainInputFiles = std::vector<std::string>();
-		trainInputFiles.push_back(std::string("aiw1-1.tok"));
-		trainInputFiles.push_back(std::string("aiw1-2.tok"));
-		trainInputFiles.push_back(std::string("aiw1-3.tok"));
-		trainInputFiles.push_back(std::string("aiw1-4.tok"));
-		trainInputFiles.push_back(std::string("aiw2-1.tok"));
-		trainInputFiles.push_back(std::string("aiw2-2.tok"));
-		trainInputFiles.push_back(std::string("aiw2-3.tok"));
-		trainInputFiles.push_back(std::string("aiw2-4.tok"));
+	std::vector<TrainFile> trainInputFiles = std::vector<TrainFile>();
+	trainInputFiles.push_back(TrainFile("aiw1-1", "tok", inputDirectory));
+	trainInputFiles.push_back(TrainFile("aiw1-2", "tok", inputDirectory));
+	trainInputFiles.push_back(TrainFile("aiw1-3", "tok", inputDirectory));
+	trainInputFiles.push_back(TrainFile("aiw1-4", "tok", inputDirectory));
+	trainInputFiles.push_back(TrainFile("aiw2-1", "tok", inputDirectory));
+	trainInputFiles.push_back(TrainFile("aiw2-2", "tok", inputDirectory));
+	trainInputFiles.push_back(TrainFile("aiw2-3", "tok", inputDirectory));
+	trainInputFiles.push_back(TrainFile("aiw2-4", "tok", inputDirectory));
 
-		std::vector<std::string> testInputFiles = std::vector<std::string>();
-		testInputFiles.push_back(std::string("aiw4-1.tok"));
-		testInputFiles.push_back(std::string("aiw4-2.tok"));
-		testInputFiles.push_back(std::string("aiw4-3.tok"));
-		testInputFiles.push_back(std::string("aiw4-4.tok"));
-		testInputFiles.push_back(std::string("aiw3-1.tok"));
-		testInputFiles.push_back(std::string("aiw3-2.tok"));
+	std::vector<TestFile> testInputFiles = std::vector<TestFile>();
+	testInputFiles.push_back(TestFile("aiw4-1", "tok", inputDirectory));
+	testInputFiles.push_back(TestFile("aiw4-2", "tok", inputDirectory));
+	testInputFiles.push_back(TestFile("aiw4-3", "tok", inputDirectory));
+	testInputFiles.push_back(TestFile("aiw4-4", "tok", inputDirectory));
+	testInputFiles.push_back(TestFile("aiw3-1", "tok", inputDirectory));
+	testInputFiles.push_back(TestFile("aiw3-2", "tok", inputDirectory));
 
-		std::vector<std::string> allFiles = trainInputFiles;
-		allFiles.insert(allFiles.end(), testInputFiles.begin(), testInputFiles.end());
-		std::string allFileNames = std::string(inputDirectory).append(boost::algorithm::join(allFiles, std::string(" ").append(inputDirectory)));
-
+	std::string allFileNames;
+	BOOST_FOREACH( TrainFile f, trainInputFiles) // generate a list of all file names
+	{
+		allFileNames += f.getPath() + " ";
+	}
 
 	PatternModelOptions options;
 	options.DOREVERSEINDEX = true;
@@ -64,22 +67,23 @@ int main(int argc, char** argv)
 	int indentation = 0;
 
 	std::cout << std::string(indentation++, '\t') << "+ Creating collection files" << std::endl;
-
 	std::cout << std::string(indentation, '\t') << "Class encoding collection files..." << std::endl;
 
-	system(std::string("colibri-classencode -o ").append(generatedDirectory).append("collection -u ").append(allFileNames).c_str());
+	ColibriFile collectionCorpusFile = ColibriFile(collectionName, "colibri.cls", generatedDirectory, ColibriFile::Type::CORPUS);
+	ColibriFile collectionEncodedFile = ColibriFile(collectionName, "colibri.dat", generatedDirectory, ColibriFile::Type::ENCODED); //collectionInputFileName
+	ColibriFile collectionPatternFile = ColibriFile(collectionName, "colibri.dat", generatedDirectory, ColibriFile::Type::PATTERNMODEL); //collectionOutputFileName
 
-	const std::string collectionClassFile = generatedDirectory + "collection.colibri.cls";
-	ClassEncoder collectionClassEncoder = ClassEncoder(collectionClassFile);
+	std::string collectionClassEncodeCommand = std::string("colibri-classencode -o ").append(collectionCorpusFile.getPath(false)).append(" -u ").append(allFileNames);
+	std::cout << "Executing command: " << collectionClassEncodeCommand << std::endl;
+	system(collectionClassEncodeCommand.c_str());
 
-	boost::shared_ptr<ClassDecoder> collectionClassDecoderPtr(new ClassDecoder(collectionClassFile));
+	ClassEncoder collectionClassEncoder = ClassEncoder(collectionCorpusFile.getPath());
+	boost::shared_ptr<ClassDecoder> collectionClassDecoderPtr(new ClassDecoder(collectionCorpusFile.getPath()));
 
-	std::string collectionInputFileName = generatedDirectory + "collection.colibri.dat";
-	std::string collectionOutputFileName = generatedDirectory + "collection.colibri.patternmodel";
 
 	IndexedPatternModel<> collectionIndexedModel;
 	std::cout << std::string(indentation, '\t') << "Indexing collection" << std::endl;
-	collectionIndexedModel.train(collectionInputFileName, options);
+	collectionIndexedModel.train(collectionEncodedFile.getPath(), options);
 
 	std::cout << std::string(--indentation, '\t') << "- Creating collection files" << std::endl;
 
@@ -91,37 +95,121 @@ int main(int argc, char** argv)
 	std::cout << std::string(indentation++, '\t') << "+ Processing training files" << std::endl;
 
 	int docCntr = 0;
-	BOOST_FOREACH( std::string fileName, trainInputFiles )
+	BOOST_FOREACH( TrainFile tf, trainInputFiles )
 	{
-		std::cout << std::string(indentation++, '\t') << "+ " << fileName << std::endl;
+		std::cout << std::string(indentation++, '\t') << "+ " << tf.getPath() << std::endl;
 		std::cout << std::string(indentation, '\t') << "Encoding document" << std::endl;
-		Document document = Document(docCntr++, fileName, collectionClassDecoderPtr);
-
-		const std::string command = std::string("colibri-classencode -o ") + generatedDirectory + fileName + " -c " + generatedDirectory + "collection.colibri.cls " + inputDirectory + fileName;
-		std::cout << "Executing command: " << command << std::endl;
-		system( command.c_str() );
-
-		const std::string documentClassFile = generatedDirectory + fileName + ".cls";
-		const std::string inputFileName = generatedDirectory + fileName + ".colibri.dat";
-
-		IndexedPatternModel<> documentModel;
-		documentModel.train(inputFileName, options);
-
-		std::cout << std::string(indentation, '\t') << "Iterating over all patterns" << std::endl;
-		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
-		{
-			const Pattern pattern = iter->first;
-			const IndexedData data = iter->second;
-
-			double value = documentModel.occurrencecount(pattern);
-
-			document.updateValue(pattern, value);
-		}
+		Document document = Document(docCntr++, tf.getPath(), collectionClassDecoderPtr);
 //
-//		trainLanguageModel.addDocument(document);
+//		const std::string command = std::string("colibri-classencode -o ") + generatedDirectory + fileName + " -c " + generatedDirectory + "collection.colibri.cls " + inputDirectory + fileName;
+//		std::cout << "Executing command: " << command << std::endl;
+//		system( command.c_str() );
+//
+//		const std::string documentClassFile = generatedDirectory + fileName + ".cls";
+//		const std::string inputFileName = generatedDirectory + fileName + ".colibri.dat";
+//
+//		IndexedPatternModel<> documentModel;
+//		documentModel.train(inputFileName, options);
+//
+//		std::cout << std::string(indentation, '\t') << "Iterating over all patterns" << std::endl;
+//		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
+//		{
+//			const Pattern pattern = iter->first;
+//			const IndexedData data = iter->second;
+//
+//			double value = documentModel.occurrencecount(pattern);
+//
+//			document.updateValue(pattern, value);
+//		}
+////
+////		trainLanguageModel.addDocument(document);
 
-		std::cout << std::string(--indentation, '\t') << "- " << fileName << std::endl;
+		std::cout << std::string(--indentation, '\t') << "- " << tf.getPath() << std::endl;
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //
 //	std::cout << std::string(--indentation, '\t') << "- Processing training files" << std::endl;
 //

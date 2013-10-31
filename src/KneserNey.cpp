@@ -33,12 +33,12 @@ double KneserNey::computeSimularity(const Document& document)
  */
 double KneserNey::smoothedProbability(const Pattern& pattern, int indentation)
 {
-	std::cout << std::string(indentation, '\t') << ">" << indentation << " Computing smoothed probability" << std::endl;
+	std::cout << indent(indentation) << ">" << indentation << " Computing smoothed probability" << std::endl;
 
 	Pattern smallerPattern = Pattern(pattern, 1, pattern.n() - 1);
 	double rValue = interpolationFactor(pattern, indentation + 1) * getSmoothedValue(smallerPattern, indentation + 1);
 
-	std::cout << std::string(indentation, '\t') << "<" << indentation << " smoothed probability" << rValue << std::endl;
+	std::cout << indent(indentation) << "<" << indentation << " smoothed probability" << rValue << std::endl;
 
 	return rValue;
 }
@@ -63,7 +63,7 @@ void KneserNey::computeFrequencyStats(int indentation)
 	{
 		++total;
 
-		std::cout << indent(indentation) << "Pattern " << total << " of " << ipm.size() << std::endl;
+//		std::cout << indent(indentation) << "Pattern " << total << " of " << ipm.size() << std::endl;
 //		std::cout <<  spin_chars[total % sizeof(spin_chars)] << std::flush;
 
 
@@ -146,7 +146,7 @@ int KneserNey::patternCount(const Pattern& pattern)
  */
 double KneserNey::rawProbability(const Pattern& pattern, int indentation)
 {
-	std::cout << std::string(indentation, '\t') << ">" << indentation << " Computing raw probability" << std::endl;
+	std::cout << indent(indentation) << ">" << indentation << " Computing raw probability" << std::endl;
 
 	double pCount = patternCount(pattern);
 	double rValue = 0.0;
@@ -155,16 +155,16 @@ double KneserNey::rawProbability(const Pattern& pattern, int indentation)
 	if (pattern.n() == 1)
 	{
 		rValue = pCount / tokens;
-		std::cout << std::string(indentation + 1, '\t') << "pCount(" << pCount << ") and tokens("
+		std::cout << indent(indentation+1) << "pCount(" << pCount << ") and tokens("
 		        << getPatternModel().tokens() << ")" << std::endl;
 	} else
 	{
 		rValue = (pCount - discount(pCount)) / tokens;
-		std::cout << std::string(indentation + 1, '\t') << "pCount(" << pCount << "), discount(" << discount(pCount)
+		std::cout << indent(indentation+1) << "pCount(" << pCount << "), discount(" << discount(pCount)
 		        << "), and tokens(" << getPatternModel().tokens() << ")" << std::endl;
 	}
 
-	std::cout << std::string(indentation, '\t') << "<" << indentation << " raw probability = " << rValue << std::endl;
+	std::cout << indent(indentation) << "<" << indentation << " raw probability = " << rValue << std::endl;
 
 	return rValue;
 }
@@ -177,30 +177,27 @@ double KneserNey::rawProbability(const Pattern& pattern, int indentation)
  */
 double KneserNey::interpolationFactor(const Pattern& pattern, int indentation)
 {
-	std::cout << std::string(indentation, '\t') << ">" << indentation << " Computing interpolation factor" << std::endl;
+	std::cout << indent(indentation) << ">" << indentation << " Computing interpolation factor" << std::endl;
 
 	int N1 = 0;
 	int N2 = 0;
 	int N3 = 0;
 
+	double D1 = 1 - 2 * y() * (n2 / n1);
+	double D2 = 2 - 3 * y() * (n3 / n2);
+	double D3 = 3 - 4 * y() * (n4 / n3);
+
 	N(pattern, N1, N2, N3);
 
-	double term1 = 0.0;
-	term1 = 1 - 2 * y() * (n2 / n1); // D1
-	term1 *= N1;
-
-	double term2 = 0.0;
-	term2 = 2 - 3 * y() * (n3 / n2); // D2
-	term2 *= N2;
-
-	double term3 = 0.0;
-	term3 = 3 - 4 * y() * (n4 / n3); // D3+
-	term3 *= N3;
+	double term1 = D1 * N1;
+	double term2 = D2 * N2;
+	double term3 = D3 * N3;
 
 	double rValue = (term1 + term2 + term3) / getPatternModel().tokens();
 
-	std::cout << std::string(indentation, '\t') << "<" << indentation << " interpolation factor: " << rValue << " with N1(" << N1
-	        << ") N2(" << N2 << ") N3(" << N3 << ")" << std::endl;
+	std::cout << indent(indentation) << "<" << indentation << " interpolation factor: " << rValue << " with N1(" << N1
+	        << ") N2(" << N2 << ") N3(" << N3 << ") and D1(" << D1
+	        << ") D2(" << D2 << ") D3(" << D3 << ") y(" << y() << ") n1(" << n1 << ") n2(" << n2 << ") n3(" << n3 << ") n4(" << n4 << ")" << std::endl;
 
 	return rValue;
 }
@@ -248,7 +245,7 @@ double KneserNey::N(const Pattern& pattern, int& N1, int& N2, int& N3)
  */
 double KneserNey::getSmoothedValue(const Pattern& pattern, int indentation)
 {
-	std::cout << std::string(indentation, '\t') << "+" << indentation << " Computing getSmoothedValue for pattern ["
+	std::cout << indent(indentation) << "+" << indentation << " Computing getSmoothedValue for pattern ["
 	        << pattern.tostring(*classDecoder) << "]" << std::endl;
 
 	int currentNInNgram = pattern.n();
@@ -259,7 +256,7 @@ double KneserNey::getSmoothedValue(const Pattern& pattern, int indentation)
 	if (currentNInNgram == 1)
 	{
 		rValue = rawProbability(pattern, indentation + 1);
-		std::cout << std::string(indentation, '\t') << "<" << indentation << " smoothed value for unigram: " << rValue
+		std::cout << indent(indentation) << "<" << indentation << " smoothed value for unigram: " << rValue
 		        << std::endl;
 	} else
 	{
@@ -269,7 +266,7 @@ double KneserNey::getSmoothedValue(const Pattern& pattern, int indentation)
 		        indentation + 1);
 		rValue = rawProb + smoProb;
 
-		std::cout << std::string(indentation, '\t') << "<" << indentation << " smoothed value = " << rValue
+		std::cout << indent(indentation) << "-" << indentation << " smoothed value = " << rValue
 		        << " with rawProb(" << rawProb << ") and smoProb(" << smoProb << ")" << std::endl;
 	}
 

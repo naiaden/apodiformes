@@ -141,6 +141,9 @@ int main(int argc, char** argv)
 	// ##################################################    Testing
 	std::cout << indent(indentation++) << "+ Processing testing files" << std::endl;
 
+	double perplexity = 0;
+
+
 	docCntr = 0;
 	BOOST_FOREACH( TestFile tf, testInputFiles )
 	{
@@ -166,11 +169,11 @@ int main(int argc, char** argv)
 		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
 		{
 			const Pattern pattern = iter->first;
-			const IndexedData data = iter->second;
 
 			double value = documentModel.occurrencecount(pattern);
 
-			document.updateValue(pattern, value);
+
+			perplexity += trainLanguageModel.getSmoothedValue(pattern, ++indentation);
 		}
 
 		trainLanguageModel.addDocument(document);
@@ -178,6 +181,10 @@ int main(int argc, char** argv)
 		std::cout << indent(--indentation) << "- " << tf.getPath() << std::endl;
 	}
 	std::cout << indent(--indentation) << "- Processing testing files" << std::endl;
+
+
+
+
 
 
 	std::cout << "ALS EEN REIGER" << std::endl;

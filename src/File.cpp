@@ -33,8 +33,8 @@ std::string File::getExtension() const
 std::string File::getDirectory(bool delim) const
 {
 	if (!delim)
-		return directory;
-	return directory + "/";
+		return directory.substr(0, directory.size()-1);;
+	return directory;
 }
 std::string File::getPath(bool withExtension) const
 {

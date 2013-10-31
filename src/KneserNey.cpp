@@ -10,6 +10,8 @@
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "Common.h"
+
 KneserNey::KneserNey(const IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder, Modification algorithm )
 		: VectorSpaceModel(patternModel, classDecoder), algorithm(algorithm)
 {
@@ -44,18 +46,27 @@ double KneserNey::smoothedProbability(const Pattern& pattern, int indentation)
 /**
  * n1 is the number of n-grams that appear exactly one, n2 is ...
  */
-void KneserNey::computeFrequencyStats()
+void KneserNey::computeFrequencyStats(int indentation)
 {
+	std::cout << indent(indentation++) << "+ Entering computeFrequencyStats" << std::endl;
+
 	int nulls = 0;
 
 	int total = 0;
 
 	IndexedPatternModel<> ipm = getPatternModel();
 
+	static char const spin_chars[] = "/-\\|";
+//	std::cout << "|";
+
 	for (IndexedPatternModel<>::iterator iter = ipm.begin(); iter != ipm.end(); iter++)
 	{
-
 		++total;
+
+		std::cout << indent(indentation) << "Pattern " << total << " of " << ipm.size() << std::endl;
+//		std::cout <<  spin_chars[total % sizeof(spin_chars)] << std::flush;
+
+
 
 		unsigned char* data = iter->first.data;
 		if (data == NULL)
@@ -66,7 +77,7 @@ void KneserNey::computeFrequencyStats()
 		{
 			Pattern pattern = iter->first;
 
-			int value = getPatternModel().occurrencecount(pattern);
+			int value = ipm.occurrencecount(pattern);
 
 			if (value < 0)
 			{
@@ -90,7 +101,8 @@ void KneserNey::computeFrequencyStats()
 		}
 	}
 
-	std::cout << "[" << total << "] 1:" << n1 << " 2:" << n2 << " 3+:" << n3 << "(" << nulls << ")" << std::endl;
+	std::cout << indent(indentation) << "[" << total << "] 1:" << n1 << " 2:" << n2 << " 3+:" << n3 << "(" << nulls << ")" << std::endl;
+	std::cout << indent(--indentation) << "- Leaving computeFrequencyStats" << std::endl;
 }
 
 KneserNey::~KneserNey()

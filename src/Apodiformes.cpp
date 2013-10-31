@@ -24,13 +24,16 @@
 #include "TFIDF.h"
 #include "File.h"
 
+#include "Common.h"
+
 int main(int argc, char** argv)
 {
 	std::cout << "STRAK" << std::endl;
 
-	const std::string inputDirectory = "docs/alice";
-	const std::string generatedDirectory = "docs/generated";
+	const std::string inputDirectory = "docs/alice/";
+	const std::string generatedDirectory = "docs/generated/";
 	const std::string collectionName = "alice";
+	const std::string colibriEncoder = "~/Software/colibri-core/src/colibri-classencode";
 
 	std::vector<TrainFile> trainInputFiles = std::vector<TrainFile>();
 	trainInputFiles.push_back(TrainFile("aiw1-1", "tok", inputDirectory));
@@ -52,9 +55,8 @@ int main(int argc, char** argv)
 
 	std::string allFileNames;
 	BOOST_FOREACH( TrainFile f, trainInputFiles) // generate a list of all file names
-	{
-		allFileNames += f.getPath() + " ";
-	}
+{	allFileNames += f.getPath() + " ";
+}
 
 	PatternModelOptions options;
 	options.DOREVERSEINDEX = true;
@@ -63,60 +65,59 @@ int main(int argc, char** argv)
 	options.MAXLENGTH = 5;
 	options.QUIET = true;
 
-
 	int indentation = 0;
 
-	std::cout << std::string(indentation++, '\t') << "+ Creating collection files" << std::endl;
-	std::cout << std::string(indentation, '\t') << "Class encoding collection files..." << std::endl;
+	std::cout << indent(indentation++) << "+ Creating collection files" << std::endl;
+	std::cout << indent(indentation) << "Class encoding collection files..." << std::endl;
 
-	ColibriFile collectionCorpusFile = ColibriFile(collectionName, "colibri.cls", generatedDirectory, ColibriFile::Type::CORPUS);
-	ColibriFile collectionEncodedFile = ColibriFile(collectionName, "colibri.dat", generatedDirectory, ColibriFile::Type::ENCODED); //collectionInputFileName
-	ColibriFile collectionPatternFile = ColibriFile(collectionName, "colibri.pattern", generatedDirectory, ColibriFile::Type::PATTERNMODEL); //collectionOutputFileName
+	ColibriFile collectionCorpusFile = ColibriFile(collectionName, "colibri.cls", generatedDirectory,
+	        ColibriFile::Type::CORPUS);
+	ColibriFile collectionEncodedFile = ColibriFile(collectionName, "colibri.dat", generatedDirectory,
+	        ColibriFile::Type::ENCODED); //collectionInputFileName
+	ColibriFile collectionPatternFile = ColibriFile(collectionName, "colibri.pattern", generatedDirectory,
+	        ColibriFile::Type::PATTERNMODEL); //collectionOutputFileName
 
-	std::string collectionClassEncodeCommand = std::string("colibri-classencode") + " -d " + generatedDirectory + " -o " + collectionCorpusFile.getFileName(false) + " -u " + allFileNames;
-	std::cout << "Executing command: " << collectionClassEncodeCommand << std::endl;
+	std::string collectionClassEncodeCommand = colibriEncoder + " -d " + generatedDirectory + " -o "
+	        + collectionCorpusFile.getFileName(false) + " -u " + allFileNames;
+	std::cout << indent(indentation) << "Executing command: " << collectionClassEncodeCommand << std::endl;
 	system(collectionClassEncodeCommand.c_str());
 
 	ClassEncoder collectionClassEncoder = ClassEncoder(collectionCorpusFile.getPath());
 	boost::shared_ptr<ClassDecoder> collectionClassDecoderPtr(new ClassDecoder(collectionCorpusFile.getPath()));
 
-
 	IndexedPatternModel<> collectionIndexedModel;
-	std::cout << std::string(indentation, '\t') << "Indexing collection" << std::endl;
+	std::cout << indent(indentation) << "Indexing collection" << std::endl;
 	collectionIndexedModel.train(collectionEncodedFile.getPath(), options);
 
-	std::cout << std::string(--indentation, '\t') << "- Creating collection files" << std::endl;
-
+	std::cout << indent(--indentation) << "- Creating collection files" << std::endl;
 
 	KneserNey trainLanguageModel = KneserNey(collectionIndexedModel, collectionClassDecoderPtr);
 
-
-
+	// ##################################################    Training
 	std::cout << std::string(indentation++, '\t') << "+ Processing training files" << std::endl;
 
 	int docCntr = 0;
 	BOOST_FOREACH( TrainFile tf, trainInputFiles )
 	{
-		std::cout << std::string(indentation++, '\t') << "+ " << tf.getPath() << std::endl;
-		std::cout << std::string(indentation, '\t') << "Encoding document" << std::endl;
+		std::cout << indent(indentation++) << "+ " << tf.getPath() << std::endl;
+		std::cout << indent(indentation) << "+ Encoding document" << std::endl;
 		Document document = Document(docCntr++, tf.getPath(), collectionClassDecoderPtr);
 
-
 		ColibriFile documentCorpusFile = ColibriFile(tf.getFileName(false), "colibri.cls", generatedDirectory, ColibriFile::Type::CORPUS); //documentClassFile
-		ColibriFile documentEncodedFile = ColibriFile(tf.getFileName(false), "colibri.dat", generatedDirectory, ColibriFile::Type::ENCODED); //inputFileName
+		ColibriFile documentEncodedFile = ColibriFile(tf.getFileName(true), "colibri.dat", generatedDirectory, ColibriFile::Type::ENCODED);//inputFileName
 		ColibriFile documentPatternFile = ColibriFile(tf.getFileName(false), "colibri.pattern", generatedDirectory, ColibriFile::Type::PATTERNMODEL);
 
-		const std::string command = std::string("colibri-classencode") + " -d " + generatedDirectory + " -o " + documentCorpusFile.getFileName(false) + " -c " + collectionCorpusFile.getPath() + " " + tf.getPath();
-		std::cout << "Executing command: " << command << std::endl;
+		const std::string command = colibriEncoder + " -d " + generatedDirectory + " -o " + documentCorpusFile.getFileName(false) + " -c " + collectionCorpusFile.getPath() + " " + tf.getPath();
+		std::cout << indent(indentation) << "Executing command: " << command << std::endl;
 		system( command.c_str() );
+		std::cout << indent(indentation) << "- Encoding done" << std::endl;
 
-
-
-
+		std::cout << indent(indentation) << "+ Training on file: " << documentEncodedFile.getPath() << std::endl;
 		IndexedPatternModel<> documentModel;
 		documentModel.train(documentEncodedFile.getPath(), options);
+		std::cout << indent(indentation) << "- Training on file" << std::endl;
 
-		std::cout << std::string(indentation, '\t') << "Iterating over all patterns" << std::endl;
+		std::cout << indent(indentation) << "Iterating over all patterns" << std::endl;
 		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
 		{
 			const Pattern pattern = iter->first;
@@ -126,196 +127,60 @@ int main(int argc, char** argv)
 
 			document.updateValue(pattern, value);
 		}
-//
-//		trainLanguageModel.addDocument(document);
 
-		std::cout << std::string(--indentation, '\t') << "- " << tf.getPath() << std::endl;
+		trainLanguageModel.addDocument(document);
+
+		std::cout << indent(--indentation) << "- " << tf.getPath() << std::endl;
 	}
+	std::cout << indent(--indentation) << "- Processing training files" << std::endl;
 
+	std::cout << indent(indentation) << "+ Computing frequency stats for KN" << std::endl;
+	trainLanguageModel.computeFrequencyStats();
+	std::cout << indent(indentation) << "- Computing frequency stats for KN" << std::endl;
 
+	// ##################################################    Testing
+	std::cout << indent(indentation++) << "+ Processing testing files" << std::endl;
 
+	docCntr = 0;
+	BOOST_FOREACH( TestFile tf, testInputFiles )
+	{
+		std::cout << indent(indentation++) << "+ " << tf.getPath() << std::endl;
+		std::cout << indent(indentation) << "+ Encoding document" << std::endl;
+		Document document = Document(docCntr++, tf.getPath(), collectionClassDecoderPtr);
 
+		ColibriFile documentCorpusFile = ColibriFile(tf.getFileName(false), "colibri.cls", generatedDirectory, ColibriFile::Type::CORPUS); //documentClassFile
+		ColibriFile documentEncodedFile = ColibriFile(tf.getFileName(true), "colibri.dat", generatedDirectory, ColibriFile::Type::ENCODED);//inputFileName
+		ColibriFile documentPatternFile = ColibriFile(tf.getFileName(false), "colibri.pattern", generatedDirectory, ColibriFile::Type::PATTERNMODEL);
 
+		const std::string command = colibriEncoder + " -U" + " -d " + generatedDirectory + " -o " + documentCorpusFile.getFileName(false) + " -c " + collectionCorpusFile.getPath() + " " + tf.getPath();
+		std::cout << indent(indentation) << "Executing command: " << command << std::endl;
+		system( command.c_str() );
+		std::cout << indent(indentation) << "- Encoding done" << std::endl;
 
+		std::cout << indent(indentation) << "+ Testing on file: " << documentEncodedFile.getPath() << std::endl;
+		IndexedPatternModel<> documentModel;
+		documentModel.train(documentEncodedFile.getPath(), options);
+		std::cout << indent(indentation) << "- Testing on file" << std::endl;
 
+		std::cout << indent(indentation) << "Iterating over all patterns" << std::endl;
+		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
+		{
+			const Pattern pattern = iter->first;
+			const IndexedData data = iter->second;
 
+			double value = documentModel.occurrencecount(pattern);
 
+			document.updateValue(pattern, value);
+		}
 
+		trainLanguageModel.addDocument(document);
 
+		std::cout << indent(--indentation) << "- " << tf.getPath() << std::endl;
+	}
+	std::cout << indent(--indentation) << "- Processing testing files" << std::endl;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-//	std::cout << std::string(--indentation, '\t') << "- Processing training files" << std::endl;
-//
-//
-//	std::cout << std::string(indentation++, '\t') << "+ Computing frequency stats for Kneser-Ney" << std::endl;
-//	trainLanguageModel.computeFrequencyStats();
-//	std::cout << std::string(--indentation, '\t') << "- Computing frequency stats for Kneser-Ney" << std::endl;
-//
-//
-//
-//
-//
-//
-//	std::cout << std::string(indentation++, '\t') << "+ Processing test files" << std::endl;
-//
-//	int docCntr = 0;
-//	BOOST_FOREACH( std::string fileName, testInputFiles )
-//	{
-//		std::cout << std::string(indentation++, '\t') << "+ " << fileName << std::endl;
-//		std::cout << std::string(indentation, '\t') << "Encoding document" << std::endl;
-//		Document document = Document(docCntr++, fileName, collectionClassDecoderPtr);
-//
-//		const std::string command = std::string("colibri-classencode -c docs/aiw.tok.colibri.cls ") + fileName;
-//		system( command.c_str() );
-//
-//		const std::string documentClassFile = fileName + ".cls";
-//		const std::string inputFileName = fileName + ".colibri.dat";
-//		const std::string outputFileName = fileName + ".colibri.patternmodel";
-//
-//		IndexedPatternModel<> documentModel;
-//		documentModel.train(inputFileName, options);
-//
-//		std::cout << std::string(indentation, '\t') << "Iterating over all patterns" << std::endl;
-//		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
-//		{
-//			const Pattern pattern = iter->first;
-//			const IndexedData data = iter->second;
-//
-//			double value = documentModel.occurrencecount(pattern);
-//
-//			document.updateValue(pattern, value);
-//		}
-//
-//		trainLanguageModel.addDocument(document);
-//
-//		std::cout << std::string(--indentation, '\t') << "- " << fileName << std::endl;
-//	}
-//
-//	std::cout << std::string(--indentation, '\t') << "- Processing test files" << std::endl;
-
-
-
-//	std::cout << "The vector space contains " << vsm.numberOfDocuments() << " documents" << std::endl;
-//	for(VectorSpaceModel::documentItr docItr = vsm.begin(); docItr != vsm.end(); ++docItr)
-//	{
-//		std::cout << docItr->toString() << std::endl;
-//		boost::shared_ptr< ClassDecoder> decoder = docItr->getClassDecoder();
-//		for(Document::featureItr featItr = docItr->begin(); featItr != docItr->end(); ++featItr)
-//		{
-////			std::cout << docItr->toString(featItr) << "[" << vsm.getTFIDF(featItr->first, *docItr) << "]" << std::endl;
-//		}
-//		std::cout << std::endl;
-//	}
-//
-//
-//	vsm.computeFrequencyStats();
-////	vsm.test();
-//
 
 	std::cout << "ALS EEN REIGER" << std::endl;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//	std::cout << "Iterating over all patterns in all docs" << std::endl;
-//	for (IndexedPatternModel<>::iterator iter = collectionIndexedModel.begin(); iter != collectionIndexedModel.end(); iter++)
-//	{
-//		const Pattern pattern = iter->first;
-//		const IndexedData data = iter->second;
-//
-//		double value = collectionIndexedModel.occurrencecount(pattern);
-//		std::cout << ">" << pattern.tostring(*collectionClassDecoderPtr) << "," << value << std::endl;
-//
-//	}
-//
-//	KneserNey vsm = KneserNey(collectionIndexedModel, collectionClassDecoderPtr);
-//
 
 

@@ -32,7 +32,7 @@ public:
 	virtual ~KneserNey();
 	double getSmoothedValue(const Pattern& pattern, int indentation = 0);
 
-	void computeFrequencyStats();
+	void computeFrequencyStats(int indentation = 0);
 	double computeSimularity(const Document& document);
 
 private:

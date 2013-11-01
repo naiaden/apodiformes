@@ -11,6 +11,10 @@
 #include "VectorSpaceModel.h"
 #include <pattern.h>
 
+
+/**
+ * EVERYTHING IN LOG SPACE
+ */
 class KneserNey: public VectorSpaceModel
 {
 public:

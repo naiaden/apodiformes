@@ -11,6 +11,8 @@
 #include <iostream>
 #include <fstream>
 
+#include <math.h>
+
 #include <classencoder.h>
 #include <classdecoder.h>
 #include <patternmodel.h>
@@ -25,6 +27,11 @@
 #include "File.h"
 
 #include "Common.h"
+
+double perplexity(double sum, int instances)
+{
+	return (1.0/pow(sum, double(instances)));
+}
 
 int main(int argc, char** argv)
 {
@@ -145,12 +152,13 @@ int main(int argc, char** argv)
 	// ##################################################    Testing
 	std::cout << indent(indentation++) << "+ Processing testing files" << std::endl;
 
-	double perplexity = 0;
-
+	double testPerplexity = 0;
+	int numberOfTestPatterns = 0;
 
 	docCntr = 0;
 	BOOST_FOREACH( TestFile tf, testInputFiles )
 	{
+
 		std::cout << indent(indentation++) << "+ " << tf.getPath() << std::endl;
 		std::cout << indent(indentation) << "+ Encoding document" << std::endl;
 		Document document = Document(docCntr++, tf.getPath(), collectionClassDecoderPtr);
@@ -170,21 +178,33 @@ int main(int argc, char** argv)
 		std::cout << indent(indentation) << "- Testing on file" << std::endl;
 
 		std::cout << indent(indentation) << "Iterating over all patterns" << std::endl;
+		double documentPerplexity = 0.0;
+		int numberPatternsInDocument = 0;
 		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
 		{
 			const Pattern pattern = iter->first;
 
-			double value = documentModel.occurrencecount(pattern);
+			++numberOfTestPatterns;
+			++numberPatternsInDocument;
+			double patternPerplexity = trainLanguageModel.getSmoothedValue(pattern, indentation+1);
 
-
-			perplexity += trainLanguageModel.getSmoothedValue(pattern, indentation+1);
+			documentPerplexity += patternPerplexity;
+			testPerplexity += documentPerplexity;
+			std::cout << indent(indentation+1) << "Perplexity: " << perplexity(patternPerplexity, 1) << " document perplexity(" << perplexity(documentPerplexity,numberPatternsInDocument) << ")" << std::endl;
 		}
 
-		trainLanguageModel.addDocument(document);
+		std::cout  << "Document perplexity: " << documentPerplexity << std::endl;
+
+		std::exit(-4);
 
 		std::cout << indent(--indentation) << "- " << tf.getPath() << std::endl;
 	}
 	std::cout << indent(--indentation) << "- Processing testing files" << std::endl;
+
+
+
+
+	std::cout << "Perplexity is " << perplexity(testPerplexity, double(numberOfTestPatterns)) << std::endl;
 
 
 

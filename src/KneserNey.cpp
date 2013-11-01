@@ -11,6 +11,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "Common.h"
+#include <algorithm>
 
 KneserNey::KneserNey(const IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder, Modification algorithm )
 		: VectorSpaceModel(patternModel, classDecoder), algorithm(algorithm)
@@ -228,6 +229,10 @@ double KneserNey::N(const Pattern& pattern, int& N1, int& N2, int& N3)
 	}
 }
 
+double epsilon = 0.000001;
+
+
+
 /**
  * af?
  */
@@ -243,7 +248,7 @@ double KneserNey::getSmoothedValue(const Pattern& pattern, int indentation)
 
 	if (currentNInNgram == 1)
 	{
-		rValue = rawProbability(pattern, indentation + 1);
+		rValue = std::max(rawProbability(pattern, indentation + 1), epsilon);
 		std::cout << indent(indentation) << "<" << indentation << " smoothed value for unigram: " << rValue
 		        << std::endl;
 	} else

@@ -77,6 +77,10 @@ int main(int argc, char** argv)
 	ColibriFile collectionPatternFile = ColibriFile(collectionName, "colibri.pattern", generatedDirectory,
 	        ColibriFile::Type::PATTERNMODEL); //collectionOutputFileName
 
+	std::string clearGeneratedFiles = std::string("/bin/rm ") + generatedDirectory + "*";
+	std::cout << indent(indentation) << "Executing command: " << clearGeneratedFiles << std::endl;
+	system(clearGeneratedFiles.c_str());
+
 	std::string collectionClassEncodeCommand = colibriEncoder + " -d " + generatedDirectory + " -o "
 	        + collectionCorpusFile.getFileName(false) + " -u " + allFileNames;
 	std::cout << indent(indentation) << "Executing command: " << collectionClassEncodeCommand << std::endl;
@@ -94,7 +98,7 @@ int main(int argc, char** argv)
 	KneserNey trainLanguageModel = KneserNey(collectionIndexedModel, collectionClassDecoderPtr);
 
 	// ##################################################    Training
-	std::cout << std::string(indentation++, '\t') << "+ Processing training files" << std::endl;
+	std::cout << indent(indentation++) << "+ Processing training files" << std::endl;
 
 	int docCntr = 0;
 	BOOST_FOREACH( TrainFile tf, trainInputFiles )
@@ -173,7 +177,7 @@ int main(int argc, char** argv)
 			double value = documentModel.occurrencecount(pattern);
 
 
-			perplexity += trainLanguageModel.getSmoothedValue(pattern, ++indentation);
+			perplexity += trainLanguageModel.getSmoothedValue(pattern, indentation+1);
 		}
 
 		trainLanguageModel.addDocument(document);

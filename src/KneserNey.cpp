@@ -55,53 +55,41 @@ void KneserNey::computeFrequencyStats(int indentation)
 	int total = 0;
 
 	IndexedPatternModel<> ipm = getPatternModel();
-
-	static char const spin_chars[] = "/-\\|";
-//	std::cout << "|";
-
 	for (IndexedPatternModel<>::iterator iter = ipm.begin(); iter != ipm.end(); iter++)
 	{
 		++total;
 
-//		std::cout << indent(indentation) << "Pattern " << total << " of " << ipm.size() << std::endl;
-//		std::cout <<  spin_chars[total % sizeof(spin_chars)] << std::flush;
+		Pattern pattern = iter->first;
 
+		int value = ipm.occurrencecount(pattern);
 
-
-		unsigned char* data = iter->first.data;
-		if (data == NULL)
+		if (value < 0)
 		{
-			std::cout << "data is NULL" << std::endl;
-			++nulls;
-		} else
-		{
-			Pattern pattern = iter->first;
-
-			int value = ipm.occurrencecount(pattern);
-
-			if (value < 0)
-			{
-				std::cerr << "Unvalid occurence count value " << value << std::endl;
-			}
-
-			switch (value)
-			{
-				case 0:
-					break;
-				case 1:
-					++n1;
-					break;
-				case 2:
-					++n2;
-					break;
-				default:
-					++n3;
-					break;
-			}
+			std::cerr << "Unvalid occurence count value " << value << std::endl;
 		}
+
+//		std::cout << "(" << pattern.tostring(*classDecoder) << ":" << value << ") ";
+
+		switch (value)
+		{
+			case 0:
+				break;
+			case 1:
+				++n1;
+				break;
+			case 2:
+				++n2;
+				break;
+			default:
+				++n3;
+				break;
+		}
+
 	}
 
-	std::cout << indent(indentation) << "[" << total << "] 1:" << n1 << " 2:" << n2 << " 3+:" << n3 << "(" << nulls << ")" << std::endl;
+//	std::cout << std::endl;
+
+	std::cout << indent(indentation+1) << "[" << total << "] 1:" << n1 << " 2:" << n2 << " 3+:" << n3 << "(" << nulls << ")" << std::endl;
 	std::cout << indent(--indentation) << "- Leaving computeFrequencyStats" << std::endl;
 }
 

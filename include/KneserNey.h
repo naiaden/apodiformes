@@ -18,6 +18,8 @@
 class KneserNey: public VectorSpaceModel
 {
 public:
+	static constexpr double epsilon = 0.000001;
+
 	/**
 	 * Modified Kneser-Ney
 	 * Modified Kneser-Ney Count
@@ -41,6 +43,7 @@ public:
 
 private:
 	double n1, n2, n3, n4;
+	double tokens;
 
 	/**
 	 * The raw probability is a discounted probability. The n-gram counts are

@@ -30,7 +30,9 @@
 
 double perplexity(double sum, int instances)
 {
-	return (1.0/pow(sum, double(instances)));
+//	return (1.0/pow(sum, double(instances)));
+	double dInstances = (double) instances;
+	return exp(-1.0*sum+dInstances*log(dInstances));
 }
 
 int main(int argc, char** argv)
@@ -43,22 +45,44 @@ int main(int argc, char** argv)
 	const std::string colibriEncoder = "~/Software/colibri-core/src/colibri-classencode";
 
 	std::vector<TrainFile> trainInputFiles = std::vector<TrainFile>();
-	trainInputFiles.push_back(TrainFile("aiw1-1", "tok", inputDirectory));
-	trainInputFiles.push_back(TrainFile("aiw1-2", "tok", inputDirectory));
-	trainInputFiles.push_back(TrainFile("aiw1-3", "tok", inputDirectory));
-	trainInputFiles.push_back(TrainFile("aiw1-4", "tok", inputDirectory));
-	trainInputFiles.push_back(TrainFile("aiw2-1", "tok", inputDirectory));
-	trainInputFiles.push_back(TrainFile("aiw2-2", "tok", inputDirectory));
-	trainInputFiles.push_back(TrainFile("aiw2-3", "tok", inputDirectory));
-	trainInputFiles.push_back(TrainFile("aiw2-4", "tok", inputDirectory));
+	trainInputFiles.push_back(TrainFile("train", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw1-1", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw1-2", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw1-3", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw1-4", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw2-1", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw2-2", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw2-3", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw2-4", "tok", inputDirectory));
+//
+//	trainInputFiles.push_back(TrainFile("aiw5-1", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw6-1", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw6-2", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw6-3", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw7-1", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw7-2", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw7-3", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw7-4", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw8-1", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw8-2", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw8-3", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw9-1", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw9-2", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw9-3", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw10-1", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw11-1", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw11-2", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw12-1", "tok", inputDirectory));
+//	trainInputFiles.push_back(TrainFile("aiw12-2", "tok", inputDirectory));
 
 	std::vector<TestFile> testInputFiles = std::vector<TestFile>();
-	testInputFiles.push_back(TestFile("aiw4-1", "tok", inputDirectory));
-	testInputFiles.push_back(TestFile("aiw4-2", "tok", inputDirectory));
-	testInputFiles.push_back(TestFile("aiw4-3", "tok", inputDirectory));
-	testInputFiles.push_back(TestFile("aiw4-4", "tok", inputDirectory));
-	testInputFiles.push_back(TestFile("aiw3-1", "tok", inputDirectory));
-	testInputFiles.push_back(TestFile("aiw3-2", "tok", inputDirectory));
+	testInputFiles.push_back(TestFile("test", "tok", inputDirectory));
+//	testInputFiles.push_back(TestFile("aiw4-1", "tok", inputDirectory));
+//	testInputFiles.push_back(TestFile("aiw4-2", "tok", inputDirectory));
+//	testInputFiles.push_back(TestFile("aiw4-3", "tok", inputDirectory));
+//	testInputFiles.push_back(TestFile("aiw4-4", "tok", inputDirectory));
+//	testInputFiles.push_back(TestFile("aiw3-1", "tok", inputDirectory));
+//	testInputFiles.push_back(TestFile("aiw3-2", "tok", inputDirectory));
 
 	std::string allFileNames;
 	BOOST_FOREACH( TrainFile f, trainInputFiles) // generate a list of all file names
@@ -103,6 +127,7 @@ int main(int argc, char** argv)
 	std::cout << indent(--indentation) << "- Creating collection files" << std::endl;
 
 	KneserNey trainLanguageModel = KneserNey(collectionIndexedModel, collectionClassDecoderPtr);
+
 
 	// ##################################################    Training
 	std::cout << indent(indentation++) << "+ Processing training files" << std::endl;
@@ -149,10 +174,12 @@ int main(int argc, char** argv)
 	trainLanguageModel.computeFrequencyStats();
 	std::cout << indent(indentation) << "- Computing frequency stats for KN" << std::endl;
 
+
+/*
 	// ##################################################    Testing
 	std::cout << indent(indentation++) << "+ Processing testing files" << std::endl;
 
-	double testPerplexity = 0;
+	double corpusProbability = 0;
 	int numberOfTestPatterns = 0;
 
 	docCntr = 0;
@@ -178,7 +205,7 @@ int main(int argc, char** argv)
 		std::cout << indent(indentation) << "- Testing on file" << std::endl;
 
 		std::cout << indent(indentation) << "Iterating over all patterns" << std::endl;
-		double documentPerplexity = 0.0;
+		double documentProbability = 0.0;
 		int numberPatternsInDocument = 0;
 		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
 		{
@@ -186,16 +213,14 @@ int main(int argc, char** argv)
 
 			++numberOfTestPatterns;
 			++numberPatternsInDocument;
-			double patternPerplexity = trainLanguageModel.getSmoothedValue(pattern, indentation+1);
+			double patternProbability = log(trainLanguageModel.getSmoothedValue(pattern, indentation+1));
 
-			documentPerplexity += patternPerplexity;
-			testPerplexity += documentPerplexity;
-			std::cout << indent(indentation+1) << "Perplexity: " << perplexity(patternPerplexity, 1) << " document perplexity(" << perplexity(documentPerplexity,numberPatternsInDocument) << ")" << std::endl;
+			documentProbability += patternProbability;
+			corpusProbability += documentProbability;
+			std::cout << indent(indentation+1) << "log probability: " << patternProbability << " Perplexity: " << perplexity(patternProbability, 1) << " document perplexity(" << perplexity(documentProbability,numberPatternsInDocument) << ")" << std::endl;
 		}
 
-		std::cout  << "Document perplexity: " << documentPerplexity << std::endl;
-
-		std::exit(-4);
+		std::cout  << "Document perplexity: " << perplexity(documentProbability,numberPatternsInDocument) << std::endl;
 
 		std::cout << indent(--indentation) << "- " << tf.getPath() << std::endl;
 	}
@@ -204,8 +229,8 @@ int main(int argc, char** argv)
 
 
 
-	std::cout << "Perplexity is " << perplexity(testPerplexity, double(numberOfTestPatterns)) << std::endl;
-
+	std::cout << "Perplexity is " << perplexity(corpusProbability, double(numberOfTestPatterns)) << std::endl;
+*/
 
 
 

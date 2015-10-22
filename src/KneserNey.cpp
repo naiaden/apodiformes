@@ -13,22 +13,56 @@
 #include "Common.h"
 #include <algorithm>
 
+#include <glog/logging.h>
+
 constexpr double KneserNey::epsilon;
 
-KneserNey::KneserNey(const IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder, Modification algorithm )
-		: VectorSpaceModel(patternModel, classDecoder), algorithm(algorithm)
+KneserNey::KneserNey(IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder, Modification algorithm )
+                : KneserNey(4, patternModel, classDecoder, algorithm)
 {
-	n1 = 0;
-	n2 = 0;
-	n3 = 0;
-	n4 = 0;
-
 }
+
+KneserNey::KneserNey(int order, IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder, Modification algorithm )
+                : VectorSpaceModel(patternModel, classDecoder), algorithm(algorithm), order(order)
+                , n1(0), n2(0), n3(0), n4(0), tokens(0)
+                , Y(0),  D1(0), D2(0), D3plus(0)
+{
+    if(order > 0)
+    {
+    //    backoffModel = boost::shared_ptr<KneserNey>(new KneserNey(order-1, patternModel, classDecoder, algorithm));
+//        bra = new KneserNey(order-1, patternModel, classDecoder, algorithm);
+    }
+}
+
+//KneserNey::~KneserNey()
+//{
+//	// TODO Auto-generated destructor stub
+//}
 
 double KneserNey::computeSimularity(const Document& document)
 {
 	std::cerr << "KneserNey::computeSimularity is unimplemented" << std::endl;
 	return 4.0;
+}
+
+
+double KneserNey::D(int c)
+{
+    if(c < 0) 
+    {
+        LOG(FATAL) << "c cannot be smaller than 0";
+    }
+    switch(c)
+    {
+        case 0:
+            return 0;
+        case 1:
+            return D1;
+        case 2:
+            return D2;
+        default:
+            return D3plus;
+    }
 }
 
 /**
@@ -55,62 +89,63 @@ double KneserNey::smoothedProbability(const Pattern& pattern, int indentation)
  */
 void KneserNey::computeFrequencyStats(int indentation)
 {
-	std::cout << indent(indentation++) << "+ Entering computeFrequencyStats" << std::endl;
+	LOG(INFO) << indent(indentation++) << "+ Entering computeFrequencyStats";
 
 	int nulls = 0;
 
 	int total = 0;
 
-	IndexedPatternModel<> ipm = getPatternModel();
-	for (IndexedPatternModel<>::iterator iter = ipm.begin(); iter != ipm.end(); iter++)
-	{
-		++total;
+	IndexedPatternModel<>& ipm = getPatternModel();
+        for (auto& iter : ipm) 
+        {
+            ++total;
+            Pattern pattern = iter.first;
 
-		Pattern pattern = iter->first;
+            if(pattern.size() == order) 
+            {
 
-		int value = ipm.occurrencecount(pattern);
+                int value = ipm.occurrencecount(pattern);
+                if (value < 0)
+                {
+                        std::cerr << "Unvalid occurence count value " << value << std::endl;
+                }
 
-		if (value < 0)
-		{
-			std::cerr << "Unvalid occurence count value " << value << std::endl;
-		}
+                tokens += value;
 
-		tokens += value;
+                switch (value)
+                {
+                        case 0:
+                                break;
+                        case 1:
+                                ++n1;
+                                break;
+                        case 2:
+                                ++n2;
+                                break;
+                        case 3:
+                                ++n3;
+                                break;
+                        case 4:
+                                ++n4;
+                                break;
+                        default:
+                                break;
+                }
+            }
+        }
 
-//		std::cout << "(" << pattern.tostring(*classDecoder) << ":" << value << ") ";
-
-		switch (value)
-		{
-			case 0:
-				break;
-			case 1:
-				++n1;
-				break;
-			case 2:
-				++n2;
-				break;
-			case 3:
-				++n3;
-				break;
-			case 4:
-				++n4;
-				break;
-			default:
-				break;
-		}
-
-	}
-
+        Y = n1/(n1+2*n2);
+        D1 = 1- 2*Y*(n2/n1);
+        D2 = 2- 3*Y*(n3/n2);
+        D3plus = 3- 4*Y*(n4/n3);
+    
 //	std::cout << std::endl;
 
-	std::cout << indent(indentation+1) << "[" << total << "] 1:" << n1 << " 2:" << n2 << " 3:" << n3 << " 4:" << n4 << std::endl;
-	std::cout << indent(--indentation) << "- Leaving computeFrequencyStats" << std::endl;
+	std::cout << indent(indentation+1) << "Order: " << order << " [" << total << "] 1:" << n1 << " 2:" << n2 << " 3:" << n3 << " 4:" << n4 << std::endl;
+        std::cout << indent(indentation+1) << "Order: " << order << " Y: " << Y << " D1: " << D1 << " D2: " << D2 << " D3+: " << D3plus << std::endl;
+	LOG(INFO) << indent(--indentation) << "- Leaving computeFrequencyStats";
 }
 
-KneserNey::~KneserNey()
-{
-	// TODO Auto-generated destructor stub
-}
 
 /**
  * P(w_i | w_{i-n+1}^i-1)
@@ -299,115 +334,3 @@ double KneserNey::discount(int count)
 	}
 }
 
-int main1(int argc, char** argv)
-{
-	std::cout << "STRAK" << std::endl;
-
-	std::cerr << "Class encoding corpus..." << std::endl;
-	system("colibri-classencode docs/aiw.tok");
-
-	PatternModelOptions options;
-	options.DOREVERSEINDEX = true;
-	options.DOSKIPGRAMS = true;
-	options.MINTOKENS = 1;
-	options.MAXLENGTH = 5;
-
-	const std::string collectionClassFile = "docs/aiw.tok.colibri.cls";
-
-	ClassEncoder collectionClassEncoder = ClassEncoder(collectionClassFile);
-
-	boost::shared_ptr<ClassDecoder> collectionClassDecoderPtr(new ClassDecoder(collectionClassFile));
-
-	std::string collectionInputFileName = "docs/aiw.tok.colibri.dat";
-	std::string collectionOutputFileName = "docs/aiw.tok.colibri.patternmodel";
-
-	IndexedPatternModel<> collectionIndexedModel;
-	collectionIndexedModel.train(collectionInputFileName, options);
-
-//	std::cout << "Iterating over all patterns in all docs" << std::endl;
-//	for (IndexedPatternModel<>::iterator iter = collectionIndexedModel.begin(); iter != collectionIndexedModel.end();
-//	        iter++)
-//	{
-//		const Pattern pattern = iter->first;
-//		const IndexedData data = iter->second;
-//
-//		double value = collectionIndexedModel.occurrencecount(pattern);
-//		std::cout << ">" << pattern.tostring(*collectionClassDecoderPtr) << "," << value << std::endl;
-//
-//	}
-
-	KneserNey vsm = KneserNey(collectionIndexedModel, collectionClassDecoderPtr);
-
-	std::vector<std::string> documentInputFiles = std::vector<std::string>();
-	documentInputFiles.push_back(std::string("docs/aiw-1.tok"));
-	documentInputFiles.push_back(std::string("docs/aiw-2.tok"));
-	documentInputFiles.push_back(std::string("docs/aiw-3.tok"));
-
-	int docCntr = 0;
-	BOOST_FOREACH( std::string fileName, documentInputFiles ){
-	Document document = Document(docCntr++, fileName, collectionClassDecoderPtr);
-
-	const std::string command = std::string("colibri-classencode -c docs/aiw.tok.colibri.cls ") + fileName;
-	system( command.c_str() );
-
-	const std::string documentClassFile = fileName + ".cls";
-	const std::string inputFileName = fileName + ".colibri.dat";
-	const std::string outputFileName = fileName + ".colibri.patternmodel";
-
-	ClassDecoder documentClassDecoder = ClassDecoder(documentClassFile);
-
-	IndexedPatternModel<> documentModel;
-	documentModel.train(inputFileName, options);
-
-	int k = 0;
-
-	std::cout << "Iterating over all patterns in " << fileName << std::endl;
-	for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
-	{
-		const Pattern pattern = iter->first;
-		const IndexedData data = iter->second;
-
-		double value = documentModel.occurrencecount(pattern);
-
-		document.updateValue(pattern, value);
-
-//			std::cout << "-" << document.toString(pattern) << "," << document.getValue(pattern) << std::endl;
-
-		++k;
-	}
-
-	std::cout << ">>> " << k << std::endl;
-
-	vsm.addDocument(document);
-
-}
-
-	std::cout << "The vector space contains " << vsm.numberOfDocuments() << " documents" << std::endl;
-	for (VectorSpaceModel::documentItr docItr = vsm.begin(); docItr != vsm.end(); ++docItr)
-	{
-		std::cout << docItr->toString() << std::endl;
-		boost::shared_ptr<ClassDecoder> decoder = docItr->getClassDecoder();
-		for (Document::featureItr featItr = docItr->begin(); featItr != docItr->end(); ++featItr)
-		{
-//			std::cout << docItr->toString(featItr) << "[" << vsm.getTFIDF(featItr->first, *docItr) << "]" << std::endl;
-		}
-		std::cout << std::endl;
-	}
-
-	vsm.computeFrequencyStats();
-
-	std::cout << "Iterating over all patterns in all docs" << std::endl;
-	for (IndexedPatternModel<>::iterator iter = collectionIndexedModel.begin(); iter != collectionIndexedModel.end();
-	        iter++)
-	{
-		const Pattern pattern = iter->first;
-
-		std::cout << "====================================================" << std::endl;
-		double value = vsm.getSmoothedValue(pattern);
-
-//		std::cout << pattern.out() << " - " << value << std::endl;
-
-	}
-
-	std::cout << "ALS EEN REIGER" << std::endl;
-}

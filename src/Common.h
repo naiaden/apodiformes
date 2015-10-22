@@ -13,9 +13,9 @@
 #include <stdio.h>
 #include <time.h>
 
+
 	const std::string currentDateTime();
 	std::string indent(int level = 0, bool timestamp = true, char indentChar = '\t');
-
 
 
 #endif /* COMMON_H_ */

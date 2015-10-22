@@ -11,6 +11,7 @@
 #include "VectorSpaceModel.h"
 #include <pattern.h>
 
+#include <boost/shared_ptr.hpp>
 
 /**
  * EVERYTHING IN LOG SPACE
@@ -19,6 +20,8 @@ class KneserNey: public VectorSpaceModel
 {
 public:
 	static constexpr double epsilon = 0.000001;
+
+        const int order;
 
 	/**
 	 * Modified Kneser-Ney
@@ -32,17 +35,26 @@ public:
 		MKN, MKNC, MKNE, MKND, MKNF
 	};
 
+
 	Modification algorithm;
 
-	KneserNey(const IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder, Modification algorithm = Modification::MKN);
-	virtual ~KneserNey();
+	KneserNey(IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder, Modification algorithm = Modification::MKN);
+	//virtual ~KneserNey();
 	double getSmoothedValue(const Pattern& pattern, int indentation = 0);
 
 	void computeFrequencyStats(int indentation = 0);
 	double computeSimularity(const Document& document);
 
+        double D(int c);
+protected:
+	KneserNey(int order, IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder, Modification algorithm = Modification::MKN);
+        
+        boost::shared_ptr<KneserNey> backoffModel;
+        //KneserNey* bra;
 private:
+
 	double n1, n2, n3, n4;
+        double Y, D1, D2, D3plus;
 	double tokens;
 
 	/**

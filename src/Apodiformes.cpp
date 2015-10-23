@@ -147,6 +147,7 @@ int main(int argc, char** argv)
         trainLanguageModel.recursiveComputeAllN(indentation+1);
 	LOG(INFO) << indent(indentation) << "- Computing frequency stats for KN";
 
+        trainLanguageModel.doSomething(indentation);
         //delete collectionClassDecoderPtr;
 /*
 	// ##################################################    Testing

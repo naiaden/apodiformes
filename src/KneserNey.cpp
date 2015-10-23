@@ -17,31 +17,73 @@
 constexpr double KneserNey::epsilon;
 
 KneserNey::KneserNey(IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm )
-                : KneserNey(4, patternModel, classDecoder, algorithm)
+                : KneserNey(3, patternModel, classDecoder, algorithm)
 {
 }
 
 KneserNey::KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm )
                 : VectorSpaceModel(patternModel, classDecoder), algorithm(algorithm), order(order)
-                , n1(0), n2(0), n3(0), n4(0), tokens(0)
+                , n(order+1), n1(0), n2(0), n3(0), n4(0), tokens(0)
                 , Y(0),  D1(0), D2(0), D3plus(0)
 {
     std::cout << "Creating KN with ORDER:" << order << std::endl;
-    if(order > 0)
+    if(order >= 1)
     {
         bra = new KneserNey(order-1, patternModel, classDecoder, algorithm);
     }
 }
 
-//KneserNey::~KneserNey()
-//{
-//	// TODO Auto-generated destructor stub
-//}
 
-double KneserNey::computeSimularity(const Document& document)
+void KneserNey::doSomething(int indentation)
 {
-	std::cerr << "KneserNey::computeSimularity is unimplemented" << std::endl;
-	return 4.0;
+        int ctr = 0;
+
+        for (auto& iter : *patternModel) 
+        {
+            ++ctr;
+
+            if (ctr > 20) break;
+
+
+            Pattern pattern = iter.first;
+
+
+            if(pattern.size() == n)
+            {
+
+                
+                std::cout << pattern.tostring(*classDecoder) << std::endl;
+
+                std::cout << "pkn: " << pkn(pattern) << std::endl;
+            }
+
+        }
+    
+}
+
+double KneserNey::pkn(const Pattern& pattern, int indentation)
+{
+    return pkn(Pattern(pattern, order, 1), Pattern(pattern, 0, order), indentation);
+}
+
+double KneserNey::pkn(const Pattern& word, const Pattern& history, int indentation)
+{
+    std::cout << indent(indentation) << "<" << n << "> Computing for word[" << word.tostring(*classDecoder)
+                                     << "] and history[" << history.tostring(*classDecoder) << "]" << std::endl;
+
+    Pattern pattern = history+word;
+
+    if(n == 1) //unigram
+    {
+        return 0.5;
+    }
+
+    int count = patternModel->occurrencecount(pattern);
+    int marginalCount = std::get<3>(m[pattern]);
+    double p1 = 1.0*(count - D(count))/marginalCount;
+
+    double p2 = gamma(history)*bra->pkn(word, Pattern(history, 1, order-1), indentation);
+    return p1+p2;
 }
 
 double KneserNey::gamma(const Pattern& pattern)
@@ -73,24 +115,6 @@ double KneserNey::D(int c)
     }
 }
 
-/**
- * af
- */
-double KneserNey::smoothedProbability(const Pattern& pattern, int indentation)
-{
-	std::cout << indent(indentation) << ">" << indentation << " Computing smoothed probability" << std::endl;
-
-	Pattern smallerPattern = Pattern(pattern, 1, pattern.n() - 1);
-	double ipF = interpolationFactor(pattern, indentation + 1);
-	double smV = getSmoothedValue(smallerPattern, indentation + 1);
-	double rValue = ipF * smV;
-
-	std::cout << indent(indentation+1) << "Interpolation factor(" << ipF << ") smoothed value(" << smV << ")" << std::endl;
-
-	std::cout << indent(indentation) << "<" << indentation << " smoothed probability" << rValue << std::endl;
-
-	return rValue;
-}
 
 void KneserNey::recursiveComputeFrequencyStats(int indentation)
 {
@@ -222,36 +246,6 @@ double KneserNey::rawProbability(const Pattern& pattern, int indentation)
 	return std::max(rValue, epsilon);
 }
 
-/**
- * gamma, af
- * N_1(w_{i-n+1}^{i-1} •) = N_1(w_{i-n+1}, w_{i-n+2}, ..., w_{i-2}, •)
- * which is like taking the n-gram, and replacing the last word with a wildcard
- * And then take all the patterns that occur once (hence N_1)
- */
-double KneserNey::interpolationFactor(const Pattern& pattern, int indentation)
-{
-	std::cout << indent(indentation) << ">" << indentation << " Computing interpolation factor" << std::endl;
-
-	int N1 = 0;
-	int N2 = 0;
-	int N3 = 0;
-        int marginalCount = 0;
-
-	N(pattern, N1, N2, N3, marginalCount);
-
-	double term1 = D1 * N1;
-	double term2 = D2 * N2;
-	double term3 = D3plus * N3;
-
-	double rValue = (term1 + term2 + term3) / tokens;
-
-	std::cout << indent(indentation) << "<" << indentation << " interpolation factor: " << rValue << " with N1(" << N1
-	        << ") N2(" << N2 << ") N3(" << N3 << ") and D1(" << D1
-	        << ") D2(" << D2 << ") D3+(" << D3plus << ") y(" << Y << ") n1(" << n1 << ") n2(" << n2 << ") n3(" << n3 << ") n4(" << n4 << ")" << std::endl;
-
-	return rValue;
-}
-
 void KneserNey::recursiveComputeAllN(int indentation)
 {
     computeAllN();
@@ -264,7 +258,7 @@ void KneserNey::recursiveComputeAllN(int indentation)
 void KneserNey::computeAllN(int indentation)
 {
     std::cout << indent(indentation) << "Computing N values for order " << order << std::endl;
-//
+
         int N1 = 0;
         int N2 = 0;
         int N3plus = 0;
@@ -304,8 +298,6 @@ double KneserNey::N(const Pattern& pattern, int& N1, int& N2, int& N3plus, int& 
 
 	Pattern newPattern = Pattern(pattern, 0, patternLength - 1);
 
-	//IndexedPatternModel<> patternModel = getPatternModel();
-//	for (IndexedPatternModel<>::iterator iter = patternModel.begin(); iter != patternModel->end(); iter++)
         for(auto& iter : *patternModel)
 	{
 		const Pattern patternFromIndex = iter.first;
@@ -333,38 +325,5 @@ double KneserNey::N(const Pattern& pattern, int& N1, int& N2, int& N3plus, int& 
 		}
 
 	}
-}
-
-/**
- * af?
- */
-double KneserNey::getSmoothedValue(const Pattern& pattern, int indentation)
-{
-	std::cout << indent(indentation) << "+" << indentation << " Computing getSmoothedValue for pattern ["
-	        << pattern.tostring(*classDecoder) << "]" << std::endl;
-
-	int currentNInNgram = pattern.n();
-	int nextN = currentNInNgram - 1;
-
-	double rValue = 0.0;
-
-	if (currentNInNgram == 1)
-	{
-		rValue = rawProbability(pattern, indentation + 1);
-		std::cout << indent(indentation) << "<" << indentation << " smoothed value for unigram: " << rValue
-		        << std::endl;
-	} else
-	{
-
-		double rawProb = rawProbability(pattern, indentation + 1);
-		double smoProb = smoothedProbability(Pattern(pattern, pattern.n() - nextN - 1, currentNInNgram),
-		        indentation + 1);
-		rValue = rawProb + smoProb;
-
-		std::cout << indent(indentation) << "-" << indentation << " smoothed value = " << rValue
-		        << " with rawProb(" << rawProb << "/" << exp(rawProb) << ") and smoProb(" << smoProb << ")" << std::endl;
-	}
-
-	return rValue;
 }
 

@@ -32,8 +32,6 @@ public:
 	void test();
 	IndexedPatternModel<>* getPatternModel();
 
-	virtual double computeSimularity(const Document& document) = 0;
-
 	typedef std::vector< Document>::iterator documentItr;
 	typedef std::vector< Document>::const_iterator const_documentItr;
 

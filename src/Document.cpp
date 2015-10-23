@@ -21,7 +21,7 @@ std::string Document::getFileName()
 	return fileName;
 }
 
-Document::Document(int documentId, const std::string& fileName, boost::shared_ptr<ClassDecoder> classDe1coder)
+Document::Document(int documentId, const std::string& fileName, ClassDecoder* classDe1coder)
 {
 	// TODO Auto-generated constructor stub
 	this->documentId = documentId;
@@ -79,7 +79,7 @@ void Document::printPatterns()
 }
 }
 
-boost::shared_ptr<ClassDecoder> Document::getClassDecoder()
+ClassDecoder* Document::getClassDecoder()
 {
 	return classDecoder;
 }

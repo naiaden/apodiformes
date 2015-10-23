@@ -89,16 +89,16 @@ int main(int argc, char** argv)
 	system(collectionClassEncodeCommand.c_str());
 
 	ClassEncoder collectionClassEncoder = ClassEncoder(collectionCorpusFile.getPath());
-	boost::shared_ptr<ClassDecoder> collectionClassDecoderPtr(new ClassDecoder(collectionCorpusFile.getPath()));
+	ClassDecoder* collectionClassDecoderPtr = new ClassDecoder(collectionCorpusFile.getPath());
 
-	IndexedPatternModel<> collectionIndexedModel;
+	IndexedPatternModel<>* collectionIndexedModelPtr = new IndexedPatternModel<>();
 	LOG(INFO) << indent(indentation) << "Indexing collection";
-	collectionIndexedModel.train(collectionEncodedFile.getPath(), options);
-        collectionIndexedModel.write(collectionPatternFile.getPath());
+	collectionIndexedModelPtr->train(collectionEncodedFile.getPath(), options);
+        collectionIndexedModelPtr->write(collectionPatternFile.getPath());
 
 	LOG(INFO) << indent(--indentation) << "- Creating collection files";
 
-	KneserNey trainLanguageModel = KneserNey(collectionIndexedModel, collectionClassDecoderPtr);
+	KneserNey trainLanguageModel = KneserNey(collectionIndexedModelPtr, collectionClassDecoderPtr);
 
 
 	// ##################################################    Training
@@ -143,10 +143,11 @@ int main(int argc, char** argv)
 	LOG(INFO) << indent(--indentation) << "- Processing training files";
 
 	LOG(INFO) << indent(indentation) << "+ Computing frequency stats for KN";
-	trainLanguageModel.computeFrequencyStats();
+	trainLanguageModel.recursiveComputeFrequencyStats(indentation+1);
+        trainLanguageModel.recursiveComputeAllN(indentation+1);
 	LOG(INFO) << indent(indentation) << "- Computing frequency stats for KN";
 
-
+        //delete collectionClassDecoderPtr;
 /*
 	// ##################################################    Testing
 	std::cout << indent(indentation++) << "+ Processing testing files" << std::endl;

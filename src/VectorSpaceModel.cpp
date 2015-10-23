@@ -10,7 +10,7 @@
 #include "Document.h"
 #include <boost/foreach.hpp>
 
-VectorSpaceModel::VectorSpaceModel(IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder)
+VectorSpaceModel::VectorSpaceModel(IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder)
 		: patternModel(patternModel), classDecoder(classDecoder)
 {
 	// TODO Auto-generated constructor stub
@@ -22,7 +22,7 @@ VectorSpaceModel::~VectorSpaceModel()
 	// TODO Auto-generated destructor stub
 }
 
-IndexedPatternModel<>& VectorSpaceModel::getPatternModel()
+IndexedPatternModel<>* VectorSpaceModel::getPatternModel()
 {
 	return patternModel;
 }
@@ -74,12 +74,12 @@ void VectorSpaceModel::test()
 			int k = 0;
 
 			std::cout << "Iterating over all patterns in " << fileName << std::endl;
-			for (IndexedPatternModel<>::iterator iter = patternModel.begin(); iter != patternModel.end(); iter++)
+			for (IndexedPatternModel<>::iterator iter = patternModel->begin(); iter != patternModel->end(); iter++)
 			{
 				const Pattern pattern = iter->first;
 				const IndexedData data = iter->second;
 
-				double value = patternModel.occurrencecount(pattern);
+				double value = patternModel->occurrencecount(pattern);
 
 				document.updateValue(pattern, value);
 

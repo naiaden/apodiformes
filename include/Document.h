@@ -13,14 +13,12 @@
 
 #include <classdecoder.h>
 
-#include <boost/shared_ptr.hpp>
-
 class Document: public PatternMap<double>
 {
 private:
 	int documentId;
 	std::string fileName;
-	boost::shared_ptr<ClassDecoder> classDecoder;
+	ClassDecoder* classDecoder;
 
 public:
 
@@ -50,10 +48,10 @@ public:
 	friend bool operator==(const Document& lhs, const Document& rhs);
 	friend bool operator!=(const Document& lhs, const Document& rhs);
 
-	Document(int documentId, const std::string& fileName, boost::shared_ptr<ClassDecoder> classDecoder);
+	Document(int documentId, const std::string& fileName, ClassDecoder* classDecoder);
 	virtual ~Document();
 
-	boost::shared_ptr<ClassDecoder> getClassDecoder();
+	ClassDecoder* getClassDecoder();
 
 	double getValue(const Pattern& pattern) const;
 	double updateValue(const Pattern& pattern, double newValue);

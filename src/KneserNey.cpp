@@ -8,7 +8,6 @@
 #include "KneserNey.h"
 
 #include <boost/foreach.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include "Common.h"
 #include <algorithm>
@@ -17,20 +16,20 @@
 
 constexpr double KneserNey::epsilon;
 
-KneserNey::KneserNey(IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder, Modification algorithm )
+KneserNey::KneserNey(IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm )
                 : KneserNey(4, patternModel, classDecoder, algorithm)
 {
 }
 
-KneserNey::KneserNey(int order, IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder, Modification algorithm )
+KneserNey::KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm )
                 : VectorSpaceModel(patternModel, classDecoder), algorithm(algorithm), order(order)
                 , n1(0), n2(0), n3(0), n4(0), tokens(0)
                 , Y(0),  D1(0), D2(0), D3plus(0)
 {
+    std::cout << "Creating KN with ORDER:" << order << std::endl;
     if(order > 0)
     {
-    //    backoffModel = boost::shared_ptr<KneserNey>(new KneserNey(order-1, patternModel, classDecoder, algorithm));
-//        bra = new KneserNey(order-1, patternModel, classDecoder, algorithm);
+        bra = new KneserNey(order-1, patternModel, classDecoder, algorithm);
     }
 }
 
@@ -45,7 +44,16 @@ double KneserNey::computeSimularity(const Document& document)
 	return 4.0;
 }
 
+double KneserNey::gamma(const Pattern& pattern)
+{
+    std::tuple<int, int, int, int> NValues = m[pattern];
+    double p1 = D1 * std::get<0>(NValues) + D2 * std::get<1>(NValues) + D3plus * std::get<2>(NValues);
+    return std::max(0.0, p1/std::get<3>(NValues));
+}   
 
+/**
+ * Discount
+ */
 double KneserNey::D(int c)
 {
     if(c < 0) 
@@ -84,6 +92,15 @@ double KneserNey::smoothedProbability(const Pattern& pattern, int indentation)
 	return rValue;
 }
 
+void KneserNey::recursiveComputeFrequencyStats(int indentation)
+{
+    computeFrequencyStats(indentation);
+    if(order > 1)
+    {
+        bra->recursiveComputeFrequencyStats(indentation);
+    }
+}
+
 /**
  * n1 is the number of n-grams that appear exactly one, n2 is ...
  */
@@ -95,8 +112,8 @@ void KneserNey::computeFrequencyStats(int indentation)
 
 	int total = 0;
 
-	IndexedPatternModel<>& ipm = getPatternModel();
-        for (auto& iter : ipm) 
+	//IndexedPatternModel<>& ipm = getPatternModel();
+        for (auto& iter : *patternModel) 
         {
             ++total;
             Pattern pattern = iter.first;
@@ -104,7 +121,7 @@ void KneserNey::computeFrequencyStats(int indentation)
             if(pattern.size() == order) 
             {
 
-                int value = ipm.occurrencecount(pattern);
+                int value = patternModel->occurrencecount(pattern);
                 if (value < 0)
                 {
                         std::cerr << "Unvalid occurence count value " << value << std::endl;
@@ -165,7 +182,7 @@ int KneserNey::patternCount(const Pattern& pattern)
 
 	for (VectorSpaceModel::documentItr docItr = begin(); docItr != end(); ++docItr)
 	{
-		boost::shared_ptr<ClassDecoder> decoder = docItr->getClassDecoder();
+		//ClassDecoder* decoder = docItr->getClassDecoder();
 		for (Document::featureItr featItr = docItr->begin(); featItr != docItr->end(); ++featItr)
 		{
 			if (featItr->first == pattern)
@@ -195,8 +212,8 @@ double KneserNey::rawProbability(const Pattern& pattern, int indentation)
 //		        << tokens << ")" << std::endl;
 //	} else
 //	{
-		rValue = (pCount - discount(pCount)) / tokens;
-		std::cout << indent(indentation+1) << "pCount(" << pCount << "), discount(" << discount(pCount)
+		rValue = (pCount - D(pCount)) / tokens;
+		std::cout << indent(indentation+1) << "pCount(" << pCount << "), discount(" << D(pCount)
 		        << "), and tokens(" << tokens << ")" << std::endl;
 //	}
 
@@ -218,44 +235,86 @@ double KneserNey::interpolationFactor(const Pattern& pattern, int indentation)
 	int N1 = 0;
 	int N2 = 0;
 	int N3 = 0;
+        int marginalCount = 0;
 
-	double D1 = 1 - 2 * y() * (n2 / n1);
-	double D2 = 2 - 3 * y() * (n3 / n2);
-	double D3 = 3 - 4 * y() * (n4 / n3);
-
-	N(pattern, N1, N2, N3);
+	N(pattern, N1, N2, N3, marginalCount);
 
 	double term1 = D1 * N1;
 	double term2 = D2 * N2;
-	double term3 = D3 * N3;
+	double term3 = D3plus * N3;
 
 	double rValue = (term1 + term2 + term3) / tokens;
 
 	std::cout << indent(indentation) << "<" << indentation << " interpolation factor: " << rValue << " with N1(" << N1
 	        << ") N2(" << N2 << ") N3(" << N3 << ") and D1(" << D1
-	        << ") D2(" << D2 << ") D3(" << D3 << ") y(" << y() << ") n1(" << n1 << ") n2(" << n2 << ") n3(" << n3 << ") n4(" << n4 << ")" << std::endl;
+	        << ") D2(" << D2 << ") D3+(" << D3plus << ") y(" << Y << ") n1(" << n1 << ") n2(" << n2 << ") n3(" << n3 << ") n4(" << n4 << ")" << std::endl;
 
 	return rValue;
+}
+
+void KneserNey::recursiveComputeAllN(int indentation)
+{
+    computeAllN();
+    if(order > 1)
+    {
+        bra->recursiveComputeAllN();
+    }
+}
+
+void KneserNey::computeAllN(int indentation)
+{
+    std::cout << indent(indentation) << "Computing N values for order " << order << std::endl;
+//
+        int N1 = 0;
+        int N2 = 0;
+        int N3plus = 0;
+        int marginalCount = 0;
+
+    int ctr = 0;
+    for( auto& iter: *patternModel )
+    {
+        ctr++;
+        if(ctr>15) break;
+        
+        if(iter.first.size() == order)
+        {
+            N1 = 0; N2 = 0; N3plus = 0; marginalCount = 0;
+            N(iter.first, N1, N2, N3plus, marginalCount);
+            m[iter.first] = std::tuple<int, int, int, int>(  N1, N2, N3plus, marginalCount);
+        }
+    }
+    
+//    std::cout << indent(indentation+1) << "<" << order << "> N1: " << N1
+
+//    ctr = 0;
+//    for(auto& iter: m)
+//    {
+//        ctr++;
+//        if(ctr>15) break;
+//        std::cout << iter.first.tostring(*classDecoder) << std::endl;
+//    }
 }
 
 /**
  * pattern is at least length 2, because it will take length-1 as beginning, and the last 1 as the wildcard
  */
-double KneserNey::N(const Pattern& pattern, int& N1, int& N2, int& N3)
+double KneserNey::N(const Pattern& pattern, int& N1, int& N2, int& N3plus, int& marginalCount)
 {
 	int patternLength = pattern.n();
 
 	Pattern newPattern = Pattern(pattern, 0, patternLength - 1);
 
-	IndexedPatternModel<> patternModel = getPatternModel();
-	for (IndexedPatternModel<>::iterator iter = patternModel.begin(); iter != patternModel.end(); iter++)
+	//IndexedPatternModel<> patternModel = getPatternModel();
+//	for (IndexedPatternModel<>::iterator iter = patternModel.begin(); iter != patternModel->end(); iter++)
+        for(auto& iter : *patternModel)
 	{
-		const Pattern patternFromIndex = iter->first;
-		const IndexedData data = iter->second;
+		const Pattern patternFromIndex = iter.first;
+		const IndexedData data = iter.second;
 
 		if (patternFromIndex.n() == patternLength && newPattern == Pattern(patternFromIndex, 0, patternLength - 1))
 		{
-			int frequency = patternModel.occurrencecount(patternFromIndex);
+			int frequency = patternModel->occurrencecount(patternFromIndex);
+                        marginalCount += frequency;
 
 			switch (frequency)
 			{
@@ -268,7 +327,7 @@ double KneserNey::N(const Pattern& pattern, int& N1, int& N2, int& N3)
 					N2 += frequency;
 					break;
 				default:
-					N3 += frequency;
+					N3plus += frequency;
 					break;
 			}
 		}
@@ -307,30 +366,5 @@ double KneserNey::getSmoothedValue(const Pattern& pattern, int indentation)
 	}
 
 	return rValue;
-}
-
-double KneserNey::y()
-{
-	return n1 / (n1 + 2 * n2);
-}
-
-double KneserNey::discount(int count)
-{
-	if (count < 0)
-	{
-		std::cerr << "Invalid count value " << count << std::endl;
-	}
-
-	switch (count)
-	{
-		case 0:
-			return 0;
-		case 1:
-			return 1 - 2 * y() * (n2 / n1);
-		case 2:
-			return 2 - 3 * y() * (n3 / n2);
-		default:
-			return 3 - 4 * y() * (n4 / n3);
-	}
 }
 

@@ -22,15 +22,15 @@ private:
 	std::vector< Document> documents;
 
 
-	IndexedPatternModel<> patternModel;
 protected:
-	boost::shared_ptr<ClassDecoder> classDecoder;
+	ClassDecoder* classDecoder;
+	IndexedPatternModel<>* patternModel;
 
 public:
 
 
 	void test();
-	IndexedPatternModel<>& getPatternModel();
+	IndexedPatternModel<>* getPatternModel();
 
 	virtual double computeSimularity(const Document& document) = 0;
 
@@ -45,7 +45,7 @@ public:
 
 	bool documentExists(const Document& document);
 
-	VectorSpaceModel(IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder);
+	VectorSpaceModel(IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder);
 	virtual ~VectorSpaceModel();
 
 	void addDocument(const Document& newDocument);

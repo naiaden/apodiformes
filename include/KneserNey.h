@@ -11,7 +11,6 @@
 #include "VectorSpaceModel.h"
 #include <pattern.h>
 
-#include <boost/shared_ptr.hpp>
 
 /**
  * EVERYTHING IN LOG SPACE
@@ -38,24 +37,31 @@ public:
 
 	Modification algorithm;
 
-	KneserNey(IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder, Modification algorithm = Modification::MKN);
+	KneserNey(IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm = Modification::MKN);
 	//virtual ~KneserNey();
 	double getSmoothedValue(const Pattern& pattern, int indentation = 0);
 
 	void computeFrequencyStats(int indentation = 0);
+        void recursiveComputeFrequencyStats(int indentation = 0);
+        void computeAllN(int indentation = 0);
+        void recursiveComputeAllN(int indentation = 0);
 	double computeSimularity(const Document& document);
 
+        double gamma(const Pattern& pattern);
+        
         double D(int c);
 protected:
-	KneserNey(int order, IndexedPatternModel<>& patternModel, boost::shared_ptr<ClassDecoder> classDecoder, Modification algorithm = Modification::MKN);
+	KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm = Modification::MKN);
         
-        boost::shared_ptr<KneserNey> backoffModel;
-        //KneserNey* bra;
+        KneserNey* bra;
 private:
 
 	double n1, n2, n3, n4;
         double Y, D1, D2, D3plus;
 	double tokens;
+
+        std::unordered_map<Pattern, std::tuple<int, int, int, int> > m;
+        double sumPatternCounts = 1;
 
 	/**
 	 * The raw probability is a discounted probability. The n-gram counts are
@@ -81,14 +87,10 @@ private:
 	 * the pattern at one go. N_x is the number of n-grams of which the last
 	 * word is a wildcard, and occur exactly x times.
 	 */
-	double N(const Pattern& pattern, int& N1, int& N2, int& N3);
+	double N(const Pattern& pattern, int& N1, int& N2, int& N3, int& marginalCount);
 
 	double wordChanceForOrder(const Pattern& pattern, int order);
 	int patternCount(const Pattern& pattern);
-	double discount(int count);
-
-	double y();
-
 };
 
 #endif /* KNESERNEY_H_ */

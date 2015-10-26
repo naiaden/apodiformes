@@ -11,6 +11,10 @@
 #include "VectorSpaceModel.h"
 #include <pattern.h>
 
+#include <cereal/types/unordered_map.hpp>
+#include <cereal/types/memory.hpp>
+#include <cereal/archives/binary.hpp>
+#include <fstream>
 
 /**
  * EVERYTHING IN LOG SPACE
@@ -22,6 +26,12 @@ public:
 
         const int order;
         const int n;
+//
+// template <class Archive>
+//   void serialize( Archive & ar )
+//    {
+//        ar( order, n, algorithm, n1, n2, n3, n4, Y, D1, D2, D3plus, tokens, m );
+//    }
 
 	/**
 	 * Modified Kneser-Ney
@@ -45,9 +55,12 @@ public:
         void recursiveComputeFrequencyStats(int indentation = 0);
         void computeAllN(int indentation = 0);
         void recursiveComputeAllN(int indentation = 0);
+        void iterativeComputeAllN(int indentation = 0);
 
         double gamma(const Pattern& pattern);
-        
+       
+        bool isOOV(const Pattern& pattern, int indentation = 0);
+
         double D(int c);
 
 
@@ -63,7 +76,7 @@ private:
 	double tokens;
 
         std::unordered_map<Pattern, std::tuple<int, int, int, int> > m;
-        double sumPatternCounts = 1;
+        std::unordered_map<Pattern, double> pkn_cache;
 
 
 	/**

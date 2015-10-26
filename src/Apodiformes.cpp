@@ -149,7 +149,7 @@ int main(int argc, char** argv)
 
         trainLanguageModel.doSomething(indentation);
         //delete collectionClassDecoderPtr;
-/*
+
 	// ##################################################    Testing
 	std::cout << indent(indentation++) << "+ Processing testing files" << std::endl;
 
@@ -181,17 +181,25 @@ int main(int argc, char** argv)
 		std::cout << indent(indentation) << "Iterating over all patterns" << std::endl;
 		double documentProbability = 0.0;
 		int numberPatternsInDocument = 0;
-		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
+                for(const auto& iter: documentModel)
 		{
-			const Pattern pattern = iter->first;
+			const Pattern pattern = iter.first;
 
-			++numberOfTestPatterns;
-			++numberPatternsInDocument;
-			double patternProbability = log(trainLanguageModel.getSmoothedValue(pattern, indentation+1));
+                        if(trainLanguageModel.isOOV(pattern))
+                        {
+                            std::cout << indent(indentation+1) << "***" << pattern.tostring(*collectionClassDecoderPtr) << std::endl;
+                        } else
+                        {
+                            ++numberOfTestPatterns;
+                            ++numberPatternsInDocument;
+                            //double patternProbability = log(trainLanguageModel.getSmoothedValue(pattern, indentation+1));
+                            double patternProbability = trainLanguageModel.pkn(pattern);
+                            std::cout << "pkn: " << patternProbability << std::endl;
 
-			documentProbability += patternProbability;
-			corpusProbability += documentProbability;
-			std::cout << indent(indentation+1) << "log probability: " << patternProbability << " Perplexity: " << perplexity(patternProbability, 1) << " document perplexity(" << perplexity(documentProbability,numberPatternsInDocument) << ")" << std::endl;
+                            documentProbability += patternProbability;
+                            corpusProbability += documentProbability;
+                            std::cout << indent(indentation+1) << "log probability: " << patternProbability << " Perplexity: " << perplexity(patternProbability, 1) << " document perplexity(" << perplexity(documentProbability,numberPatternsInDocument) << ")" << std::endl;
+                        }
 		}
 
 		std::cout  << "Document perplexity: " << perplexity(documentProbability,numberPatternsInDocument) << std::endl;
@@ -204,7 +212,7 @@ int main(int argc, char** argv)
 
 
 	std::cout << "Perplexity is " << perplexity(corpusProbability, double(numberOfTestPatterns)) << std::endl;
-*/
+
 
 
 

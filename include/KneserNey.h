@@ -65,12 +65,6 @@ private:
         std::unordered_map<Pattern, std::tuple<int, int, int, int> > m;
         double sumPatternCounts = 1;
 
-	/**
-	 * The raw probability is a discounted probability. The n-gram counts are
-	 * discounted based on their frequency, and normalised by the number of
-	 * tokens.
-	 */
-	double rawProbability(const Pattern& pattern, int indentation = 0);
 
 	/**
 	 * This is a congregated function that determines N_1, N_2, and N_3+ for
@@ -79,8 +73,6 @@ private:
 	 */
 	double N(const Pattern& pattern, int& N1, int& N2, int& N3, int& marginalCount);
 
-	double wordChanceForOrder(const Pattern& pattern, int order);
-	int patternCount(const Pattern& pattern);
 };
 
 #endif /* KNESERNEY_H_ */

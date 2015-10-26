@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 	options.DOREVERSEINDEX = true;
 	options.DOSKIPGRAMS = false;
 	options.MINTOKENS = 1;
-	options.MAXLENGTH = 5;
+	options.MAXLENGTH = 4;
 	options.QUIET = true;
 
 	int indentation = 0;

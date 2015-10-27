@@ -27,6 +27,7 @@
 #include "File.h"
 
 #include <glog/logging.h>
+#include <fstream>
 
 #include "Common.h"
 
@@ -150,68 +151,73 @@ int main(int argc, char** argv)
         trainLanguageModel.doSomething(indentation);
         //delete collectionClassDecoderPtr;
 
-	// ##################################################    Testing
-	std::cout << indent(indentation++) << "+ Processing testing files" << std::endl;
 
-	double corpusProbability = 0;
-	int numberOfTestPatterns = 0;
+        KneserNeyFactory::writeToFile(trainLanguageModel, "kneserney.out", collectionClassDecoderPtr);
+        if(collectionClassDecoderPtr == nullptr) std::cout << "Kankerpointer" << std::endl;
+        KneserNeyFactory::readFromFile("kneserney.out", collectionClassDecoderPtr);
 
-	docCntr = 0;
-	BOOST_FOREACH( TestFile tf, testInputFiles )
-	{
-
-		std::cout << indent(indentation++) << "+ " << tf.getPath() << std::endl;
-		std::cout << indent(indentation) << "+ Encoding document" << std::endl;
-		Document document = Document(docCntr++, tf.getPath(), collectionClassDecoderPtr);
-
-		ColibriFile documentCorpusFile = ColibriFile(tf.getFileName(false), "colibri.cls", generatedDirectory, ColibriFile::Type::CORPUS); //documentClassFile
-		ColibriFile documentEncodedFile = ColibriFile(tf.getFileName(true), "colibri.dat", generatedDirectory, ColibriFile::Type::ENCODED);//inputFileName
-		ColibriFile documentPatternFile = ColibriFile(tf.getFileName(false), "colibri.pattern", generatedDirectory, ColibriFile::Type::PATTERNMODEL);
-
-		const std::string command = colibriEncoder + " -U" + " -d " + generatedDirectory + " -o " + documentCorpusFile.getFileName(false) + " -c " + collectionCorpusFile.getPath() + " " + tf.getPath();
-		std::cout << indent(indentation) << "Executing command: " << command << std::endl;
-		system( command.c_str() );
-		std::cout << indent(indentation) << "- Encoding done" << std::endl;
-
-		std::cout << indent(indentation) << "+ Testing on file: " << documentEncodedFile.getPath() << std::endl;
-		IndexedPatternModel<> documentModel;
-		documentModel.train(documentEncodedFile.getPath(), options);
-		std::cout << indent(indentation) << "- Testing on file" << std::endl;
-
-		std::cout << indent(indentation) << "Iterating over all patterns" << std::endl;
-		double documentProbability = 0.0;
-		int numberPatternsInDocument = 0;
-                for(const auto& iter: documentModel)
-		{
-			const Pattern pattern = iter.first;
-
-                        if(trainLanguageModel.isOOV(pattern))
-                        {
-                            std::cout << indent(indentation+1) << "***" << pattern.tostring(*collectionClassDecoderPtr) << std::endl;
-                        } else
-                        {
-                            ++numberOfTestPatterns;
-                            ++numberPatternsInDocument;
-                            //double patternProbability = log(trainLanguageModel.getSmoothedValue(pattern, indentation+1));
-                            double patternProbability = trainLanguageModel.pkn(pattern);
-                            std::cout << "pkn: " << patternProbability << std::endl;
-
-                            documentProbability += patternProbability;
-                            corpusProbability += documentProbability;
-                            std::cout << indent(indentation+1) << "log probability: " << patternProbability << " Perplexity: " << perplexity(patternProbability, 1) << " document perplexity(" << perplexity(documentProbability,numberPatternsInDocument) << ")" << std::endl;
-                        }
-		}
-
-		std::cout  << "Document perplexity: " << perplexity(documentProbability,numberPatternsInDocument) << std::endl;
-
-		std::cout << indent(--indentation) << "- " << tf.getPath() << std::endl;
-	}
-	std::cout << indent(--indentation) << "- Processing testing files" << std::endl;
-
-
-
-
-	std::cout << "Perplexity is " << perplexity(corpusProbability, double(numberOfTestPatterns)) << std::endl;
+//	// ##################################################    Testing
+//	std::cout << indent(indentation++) << "+ Processing testing files" << std::endl;
+//
+//	double corpusProbability = 0;
+//	int numberOfTestPatterns = 0;
+//
+//	docCntr = 0;
+//	BOOST_FOREACH( TestFile tf, testInputFiles )
+//	{
+//
+//		std::cout << indent(indentation++) << "+ " << tf.getPath() << std::endl;
+//		std::cout << indent(indentation) << "+ Encoding document" << std::endl;
+//		Document document = Document(docCntr++, tf.getPath(), collectionClassDecoderPtr);
+//
+//		ColibriFile documentCorpusFile = ColibriFile(tf.getFileName(false), "colibri.cls", generatedDirectory, ColibriFile::Type::CORPUS); //documentClassFile
+//		ColibriFile documentEncodedFile = ColibriFile(tf.getFileName(true), "colibri.dat", generatedDirectory, ColibriFile::Type::ENCODED);//inputFileName
+//		ColibriFile documentPatternFile = ColibriFile(tf.getFileName(false), "colibri.pattern", generatedDirectory, ColibriFile::Type::PATTERNMODEL);
+//
+//		const std::string command = colibriEncoder + " -U" + " -d " + generatedDirectory + " -o " + documentCorpusFile.getFileName(false) + " -c " + collectionCorpusFile.getPath() + " " + tf.getPath();
+//		std::cout << indent(indentation) << "Executing command: " << command << std::endl;
+//		system( command.c_str() );
+//		std::cout << indent(indentation) << "- Encoding done" << std::endl;
+//
+//		std::cout << indent(indentation) << "+ Testing on file: " << documentEncodedFile.getPath() << std::endl;
+//		IndexedPatternModel<> documentModel;
+//		documentModel.train(documentEncodedFile.getPath(), options);
+//		std::cout << indent(indentation) << "- Testing on file" << std::endl;
+//
+//		std::cout << indent(indentation) << "Iterating over all patterns" << std::endl;
+//		double documentProbability = 0.0;
+//		int numberPatternsInDocument = 0;
+//                for(const auto& iter: documentModel)
+//		{
+//			const Pattern pattern = iter.first;
+//
+//                        if(trainLanguageModel.isOOV(pattern))
+//                        {
+//                            std::cout << indent(indentation+1) << "***" << pattern.tostring(*collectionClassDecoderPtr) << std::endl;
+//                        } else
+//                        {
+//                            ++numberOfTestPatterns;
+//                            ++numberPatternsInDocument;
+//                            //double patternProbability = log(trainLanguageModel.getSmoothedValue(pattern, indentation+1));
+//                            double patternProbability = trainLanguageModel.pkn(pattern);
+//                            std::cout << "pkn: " << patternProbability << std::endl;
+//
+//                            documentProbability += patternProbability;
+//                            corpusProbability += documentProbability;
+//                            std::cout << indent(indentation+1) << "log probability: " << patternProbability << " Perplexity: " << perplexity(patternProbability, 1) << " document perplexity(" << perplexity(documentProbability,numberPatternsInDocument) << ")" << std::endl;
+//                        }
+//		}
+//
+//		std::cout  << "Document perplexity: " << perplexity(documentProbability,numberPatternsInDocument) << std::endl;
+//
+//		std::cout << indent(--indentation) << "- " << tf.getPath() << std::endl;
+//	}
+//	std::cout << indent(--indentation) << "- Processing testing files" << std::endl;
+//
+//
+//
+//
+//	std::cout << "Perplexity is " << perplexity(corpusProbability, double(numberOfTestPatterns)) << std::endl;
 
 
 

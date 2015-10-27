@@ -21,6 +21,27 @@ KneserNey::KneserNey(IndexedPatternModel<>* patternModel, ClassDecoder* classDec
 {
 }
 
+KneserNey::KneserNey(KneserNey* kneserNey, int order, IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm )
+                : VectorSpaceModel(patternModel, classDecoder), algorithm(algorithm), order(order)
+                , n(order+1), n1(0), n2(0), n3(0), n4(0), tokens(0)
+                , Y(0),  D1(0), D2(0), D3plus(0)
+{
+    std::cout << "Creating KN with ORDER:" << order << "(n=" << n << ")" <<  std::endl;
+    bra = kneserNey;
+
+    if(!bra)
+    {
+        for(const auto& iter: *patternModel)
+        {
+            if(iter.first.size() == 1)
+            {
+                tokens += patternModel->occurrencecount(iter.first);
+            }
+        }
+    }
+
+}
+
 KneserNey::KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm )
                 : VectorSpaceModel(patternModel, classDecoder), algorithm(algorithm), order(order)
                 , n(order+1), n1(0), n2(0), n3(0), n4(0), tokens(0)
@@ -32,6 +53,7 @@ KneserNey::KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecode
         bra = new KneserNey(order-1, patternModel, classDecoder, algorithm);
     } else
     {
+        bra = nullptr;
         for(const auto& iter: *patternModel)
         {
             if(iter.first.size() == 1)
@@ -246,6 +268,7 @@ void KneserNey::computeAllN(int indentation)
     {
         if(iter.first.size() == n)
         {
+            if(ctr++ > 10) break;
 //            if(ctr < 10) { std::cout << iter.first.tostring(*classDecoder) << std::endl;}
 
             N1 = 0; N2 = 0; N3plus = 0; marginalCount = 0;

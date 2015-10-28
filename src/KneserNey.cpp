@@ -113,7 +113,7 @@ double KneserNey::pkn(const Pattern& word, const Pattern& history, int indentati
         }
 
         int count = patternModel->occurrencecount(pattern);
-        int marginalCount = std::get<3>(m[pattern]);
+        int marginalCount = std::get<3>((*m)[pattern]);
         double p1 = 1.0*(count - D(count))/marginalCount;
         std::cout << indent(indentation+1) << "prob: " << p1 << " count: " << count << " marginal count: " << marginalCount << std::endl;
 
@@ -131,7 +131,7 @@ double KneserNey::pkn(const Pattern& word, const Pattern& history, int indentati
 
 double KneserNey::gamma(const Pattern& pattern)
 {
-    std::tuple<int, int, int, int> NValues = m[pattern];
+    std::tuple<int, int, int, int> NValues = (*m)[pattern];
     double p1 = D1 * std::get<0>(NValues) + D2 * std::get<1>(NValues) + D3plus * std::get<2>(NValues);
     return std::max(0.0, p1/std::get<3>(NValues));
 }   
@@ -273,7 +273,7 @@ void KneserNey::computeAllN(int indentation)
 
             N1 = 0; N2 = 0; N3plus = 0; marginalCount = 0;
             N(iter.first, N1, N2, N3plus, marginalCount);
-            m[iter.first] = std::tuple<int, int, int, int>(  N1, N2, N3plus, marginalCount);
+            (*m)[iter.first] = std::tuple<int, int, int, int>(  N1, N2, N3plus, marginalCount);
         }
     }
 }

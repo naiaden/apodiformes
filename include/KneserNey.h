@@ -71,7 +71,7 @@ private:
         double Y, D1, D2, D3plus;
 	double tokens;
 
-        std::unordered_map<Pattern, std::tuple<int, int, int, int> > m;
+        std::unordered_map<Pattern, std::tuple<int, int, int, int> >* m = new std::unordered_map<Pattern, std::tuple<int, int, int, int> >();
         std::unordered_map<Pattern, double> pkn_cache;
 
 
@@ -159,7 +159,7 @@ struct KneserNeyFactory
 
         std::cout << "order:" << order << "alg:" << algorithm << "ns:" << n1 << ";" << n2 << ";" << n3 << ";" << n4 << "Ds:" << Y << ";" << D1 << ";" << D2 << ";" << D3plus << "toks:" << tokens << "m:" << msize << std::endl;
 
-        std::unordered_map<Pattern, std::tuple<int, int, int, int> > m;
+        std::unordered_map<Pattern, std::tuple<int, int, int, int> >* m = new std::unordered_map<Pattern, std::tuple<int, int, int, int> >();;
         for(int i = 0; i < msize; ++i)
         {
             
@@ -168,13 +168,8 @@ struct KneserNeyFactory
             std::getline(is, line); std::istringstream iss(line);
             int i1, i2, i3, i4;
             iss >> i1 >> i2 >> i3 >> i4;
-            m[p] = std::tuple<int, int, int, int>(i1, i2,i3, i4);
+            (*m)[p] = std::tuple<int, int, int, int>(i1, i2,i3, i4);
         }
-
-        //KneserNey// maak hier de recursieve kneserneychain aan(
-//        KneserNey* kneserNey = new KneserNey(order, patternModel, classDecoder, static_cast<KneserNey::Modification>(algorithm));
-//        kneserNey->n1 = n1;
-
 
         if(order >0) 
         {
@@ -222,8 +217,8 @@ struct KneserNeyFactory
         os << "COUNTOFCOUNT " << kneserNey.n1 << " " << kneserNey.n2 << " " << kneserNey.n3 << " " << kneserNey.n4 << "\n";
         os << "DISCOUNTS " << kneserNey.Y << " " << kneserNey.D1 << " " << kneserNey.D2 << " " << kneserNey.D3plus << "\n";
         os << "TOKENS " << kneserNey.tokens << "\n";
-        os << "M " << kneserNey.m.size() << "\n";
-        for(const auto& iter: kneserNey.m)
+        os << "M " << kneserNey.m->size() << "\n";
+        for(const auto& iter: *(kneserNey.m))
         {
 //            std::cout << iter.first.tostring(*classDecoder) << std::endl;
             iter.first.write(&os);

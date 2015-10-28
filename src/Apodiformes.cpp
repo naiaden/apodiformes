@@ -22,7 +22,6 @@
 #include <boost/algorithm/string/join.hpp>
 
 #include "KneserNey.h"
-#include "TFIDF.h"
 #include "File.h"
 
 #include <glog/logging.h>

@@ -127,12 +127,9 @@ struct KneserNeyFactory
     static KneserNey* recursiveReadFromFile(std::istream& is, IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder = nullptr)
     {
 
-        std::cout << "CLASSDECODER SIZE: " << classDecoder->size() << std::endl;
-        
         std::string line;
         std::string holder;
 
-            
         int order;{
         std::getline(is, line); std::istringstream iss(line);
         iss >> holder >> order;

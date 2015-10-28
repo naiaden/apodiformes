@@ -49,17 +49,17 @@ int main(int argc, char** argv)
 	const std::string collectionName = "alice";
 	const std::string colibriEncoder = "~/Software/colibri-core/src/colibri-classencode";
 
-	std::vector<TrainFile> trainInputFiles = std::vector<TrainFile>();
-	trainInputFiles.push_back(TrainFile("train", "tok", inputDirectory));
+//	std::vector<TrainFile> trainInputFiles = std::vector<TrainFile>();
+//	trainInputFiles.push_back(TrainFile("train", "tok", inputDirectory));
 
 	std::vector<TestFile> testInputFiles = std::vector<TestFile>();
 	testInputFiles.push_back(TestFile("test", "tok", inputDirectory));
 
-	std::string allFileNames;
-	BOOST_FOREACH( TrainFile f, trainInputFiles) // generate a list of all file names
-        {	
-            allFileNames += f.getPath() + " ";
-        }
+//	std::string allFileNames;
+//	BOOST_FOREACH( TrainFile f, trainInputFiles) // generate a list of all file names
+//      {	
+//          allFileNames += f.getPath() + " ";
+//      }
 
 	PatternModelOptions options;
 	options.DOREVERSEINDEX = true;
@@ -70,8 +70,8 @@ int main(int argc, char** argv)
 
 	int indentation = 0;
 
-	LOG(INFO) << indent(indentation++) << "+ Creating collection files";
-	LOG(INFO) << indent(indentation) << "Class encoding collection files...";
+//	LOG(INFO) << indent(indentation++) << "+ Creating collection files";
+//	LOG(INFO) << indent(indentation) << "Class encoding collection files...";
 
 	ColibriFile collectionCorpusFile = ColibriFile(collectionName, "colibri.cls", generatedDirectory,
 	        ColibriFile::Type::CORPUS);
@@ -80,81 +80,84 @@ int main(int argc, char** argv)
 	ColibriFile collectionPatternFile = ColibriFile(collectionName, "colibri.pattern", generatedDirectory,
 	        ColibriFile::Type::PATTERNMODEL); //collectionOutputFileName
 
-	std::string clearGeneratedFiles = std::string("/bin/rm ") + generatedDirectory + "*";
-	LOG(INFO) << indent(indentation) << "Executing command: " << clearGeneratedFiles;
-	system(clearGeneratedFiles.c_str());
+//	std::string clearGeneratedFiles = std::string("/bin/rm ") + generatedDirectory + "*";
+//	LOG(INFO) << indent(indentation) << "Executing command: " << clearGeneratedFiles;
+//	system(clearGeneratedFiles.c_str());
 
-	std::string collectionClassEncodeCommand = colibriEncoder + " -d " + generatedDirectory + " -o "
-	        + collectionCorpusFile.getFileName(false) + " -u " + allFileNames;
-	LOG(INFO) << indent(indentation) << "Executing command: " << collectionClassEncodeCommand;
-	system(collectionClassEncodeCommand.c_str());
+//	std::string collectionClassEncodeCommand = colibriEncoder + " -d " + generatedDirectory + " -o "
+//	        + collectionCorpusFile.getFileName(false) + " -u " + allFileNames;
+//	LOG(INFO) << indent(indentation) << "Executing command: " << collectionClassEncodeCommand;
+//	system(collectionClassEncodeCommand.c_str());
 
 	ClassEncoder collectionClassEncoder = ClassEncoder(collectionCorpusFile.getPath());
 	ClassDecoder* collectionClassDecoderPtr = new ClassDecoder(collectionCorpusFile.getPath());
 
-	IndexedPatternModel<>* collectionIndexedModelPtr = new IndexedPatternModel<>();
-	LOG(INFO) << indent(indentation) << "Indexing collection";
-	collectionIndexedModelPtr->train(collectionEncodedFile.getPath(), options);
-        collectionIndexedModelPtr->write(collectionPatternFile.getPath());
+        IndexedPatternModel<>* collectionIndexedModelPtr = new IndexedPatternModel<>(collectionPatternFile.getPath(), options); 
 
-	LOG(INFO) << indent(--indentation) << "- Creating collection files";
+//	IndexedPatternModel<>* collectionIndexedModelPtr = new IndexedPatternModel<>();
+//	LOG(INFO) << indent(indentation) << "Indexing collection";
+//	collectionIndexedModelPtr->train(collectionEncodedFile.getPath(), options);
+//        collectionIndexedModelPtr->write(collectionPatternFile.getPath());
 
-	KneserNey trainLanguageModel = KneserNey(collectionIndexedModelPtr, collectionClassDecoderPtr);
+//	LOG(INFO) << indent(--indentation) << "- Creating collection files";
 
+//	KneserNey trainLanguageModel = KneserNey(collectionIndexedModelPtr, collectionClassDecoderPtr);
+        KneserNey* kneserNeyPtr = KneserNeyFactory::readFromFile("kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
+        KneserNey trainLanguageModel = *kneserNeyPtr;
 
-	// ##################################################    Training
-	LOG(INFO) << indent(indentation++) << "+ Processing training files";
-
-	int docCntr = 0;
-	BOOST_FOREACH( TrainFile tf, trainInputFiles )
-	{
-		LOG(INFO) << indent(indentation++) << "+ " << tf.getPath();
-		LOG(INFO) << indent(indentation) << "+ Encoding document";
-		Document document = Document(docCntr++, tf.getPath(), collectionClassDecoderPtr);
-
-		ColibriFile documentCorpusFile = ColibriFile(tf.getFileName(false), "colibri.cls", generatedDirectory, ColibriFile::Type::CORPUS); //documentClassFile
-		ColibriFile documentEncodedFile = ColibriFile(tf.getFileName(true), "colibri.dat", generatedDirectory, ColibriFile::Type::ENCODED);//inputFileName
-		ColibriFile documentPatternFile = ColibriFile(tf.getFileName(false), "colibri.pattern", generatedDirectory, ColibriFile::Type::PATTERNMODEL);
-
-		const std::string command = colibriEncoder + " -d " + generatedDirectory + " -o " + documentCorpusFile.getFileName(false) + " -c " + collectionCorpusFile.getPath() + " " + tf.getPath();
-		LOG(INFO) << indent(indentation) << "Executing command: " << command;
-		system( command.c_str() );
-		LOG(INFO) << indent(indentation) << "- Encoding done";
-
-		LOG(INFO) << indent(indentation) << "+ Training on file: " << documentEncodedFile.getPath();
-		IndexedPatternModel<> documentModel;
-		documentModel.train(documentEncodedFile.getPath(), options);
-		LOG(INFO) << indent(indentation) << "- Training on file";
-
-		LOG(INFO) << indent(indentation) << "Iterating over all patterns";
-		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
-		{
-			const Pattern pattern = iter->first;
-			const IndexedData data = iter->second;
-
-			double value = documentModel.occurrencecount(pattern);
-
-			document.updateValue(pattern, value);
-		}
-
-		trainLanguageModel.addDocument(document);
-
-		LOG(INFO) << indent(--indentation) << "- " << tf.getPath();
-	}
-	LOG(INFO) << indent(--indentation) << "- Processing training files";
-
-	LOG(INFO) << indent(indentation) << "+ Computing frequency stats for KN";
-	trainLanguageModel.recursiveComputeFrequencyStats(indentation+1);
-        trainLanguageModel.recursiveComputeAllN(indentation+1);
-	LOG(INFO) << indent(indentation) << "- Computing frequency stats for KN";
-
+//	// ##################################################    Training
+//	LOG(INFO) << indent(indentation++) << "+ Processing training files";
+//
+//	int docCntr = 0;
+//	BOOST_FOREACH( TrainFile tf, trainInputFiles )
+//	{
+//		LOG(INFO) << indent(indentation++) << "+ " << tf.getPath();
+//		LOG(INFO) << indent(indentation) << "+ Encoding document";
+//		Document document = Document(docCntr++, tf.getPath(), collectionClassDecoderPtr);
+//
+//		ColibriFile documentCorpusFile = ColibriFile(tf.getFileName(false), "colibri.cls", generatedDirectory, ColibriFile::Type::CORPUS); //documentClassFile
+//		ColibriFile documentEncodedFile = ColibriFile(tf.getFileName(true), "colibri.dat", generatedDirectory, ColibriFile::Type::ENCODED);//inputFileName
+//		ColibriFile documentPatternFile = ColibriFile(tf.getFileName(false), "colibri.pattern", generatedDirectory, ColibriFile::Type::PATTERNMODEL);
+//
+//		const std::string command = colibriEncoder + " -d " + generatedDirectory + " -o " + documentCorpusFile.getFileName(false) + " -c " + collectionCorpusFile.getPath() + " " + tf.getPath();
+//		LOG(INFO) << indent(indentation) << "Executing command: " << command;
+//		system( command.c_str() );
+//		LOG(INFO) << indent(indentation) << "- Encoding done";
+//
+//		LOG(INFO) << indent(indentation) << "+ Training on file: " << documentEncodedFile.getPath();
+//		IndexedPatternModel<> documentModel;
+//		documentModel.train(documentEncodedFile.getPath(), options);
+//		LOG(INFO) << indent(indentation) << "- Training on file";
+//
+//		LOG(INFO) << indent(indentation) << "Iterating over all patterns";
+//		for (IndexedPatternModel<>::iterator iter = documentModel.begin(); iter != documentModel.end(); iter++)
+//		{
+//			const Pattern pattern = iter->first;
+//			const IndexedData data = iter->second;
+//
+//			double value = documentModel.occurrencecount(pattern);
+//
+//			document.updateValue(pattern, value);
+//		}
+//
+//		trainLanguageModel.addDocument(document);
+//
+//		LOG(INFO) << indent(--indentation) << "- " << tf.getPath();
+//	}
+//	LOG(INFO) << indent(--indentation) << "- Processing training files";
+//
+//	LOG(INFO) << indent(indentation) << "+ Computing frequency stats for KN";
+//	trainLanguageModel.recursiveComputeFrequencyStats(indentation+1);
+//        trainLanguageModel.recursiveComputeAllN(indentation+1);
+//	LOG(INFO) << indent(indentation) << "- Computing frequency stats for KN";
+//
         trainLanguageModel.doSomething(indentation);
         //delete collectionClassDecoderPtr;
 
 
-        KneserNeyFactory::writeToFile(trainLanguageModel, "kneserney.out", collectionClassDecoderPtr);
-        if(collectionClassDecoderPtr == nullptr) std::cout << "Kankerpointer" << std::endl;
-        KneserNeyFactory::readFromFile("kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
+//      KneserNeyFactory::writeToFile(trainLanguageModel, "kneserney.out", collectionClassDecoderPtr);
+//      if(collectionClassDecoderPtr == nullptr) std::cout << "Kankerpointer" << std::endl;
+//      KneserNeyFactory::readFromFile("kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
 
 //	// ##################################################    Testing
 //	std::cout << indent(indentation++) << "+ Processing testing files" << std::endl;

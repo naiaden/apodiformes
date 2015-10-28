@@ -43,6 +43,8 @@ public:
 	Modification algorithm;
 
 	KneserNey(IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm = Modification::MKN);
+	KneserNey(KneserNey* kneserNey, int order, IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm = Modification::MKN);
+	KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm = Modification::MKN);
 
 	void computeFrequencyStats(int indentation = 0);
         void recursiveComputeFrequencyStats(int indentation = 0);
@@ -60,7 +62,6 @@ public:
         double pkn(const Pattern& word, const Pattern& history, int indentation = 0);
         double pkn(const Pattern& pattern, int indentation = 0);
 protected:
-	KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm = Modification::MKN);
         
         KneserNey* bra;
 private:
@@ -112,18 +113,18 @@ private:
  */
 struct KneserNeyFactory
 {
-    static void readFromFile(const std::string& fileName, ClassDecoder* classDecoder = nullptr)
+    static KneserNey* readFromFile(const std::string& fileName, IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder = nullptr)
     {
         std::ifstream is;
         is.open(fileName);
 
-        recursiveReadFromFile(is, classDecoder);
+        recursiveReadFromFile(is, patternModel, classDecoder);
 
         is.close();
 
     }
 
-    static void recursiveReadFromFile(std::istream& is, ClassDecoder* classDecoder = nullptr)
+    static KneserNey* recursiveReadFromFile(std::istream& is, IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder = nullptr)
     {
 
         std::cout << "CLASSDECODER SIZE: " << classDecoder->size() << std::endl;
@@ -164,25 +165,54 @@ struct KneserNeyFactory
         {
             
             Pattern p(&is, false, false);
-            std::cout << p.tostring(*classDecoder) << std::endl;
+//            std::cout << p.tostring(*classDecoder) << std::endl;
             std::getline(is, line); std::istringstream iss(line);
             int i1, i2, i3, i4;
             iss >> i1 >> i2 >> i3 >> i4;
-            //m[p] = std::tuple<int, int, int, int>(i1, i2,i3, i4);
+            m[p] = std::tuple<int, int, int, int>(i1, i2,i3, i4);
         }
 
-        KneserNey// maak hier de recursieve kneserneychain aan(
+        //KneserNey// maak hier de recursieve kneserneychain aan(
+//        KneserNey* kneserNey = new KneserNey(order, patternModel, classDecoder, static_cast<KneserNey::Modification>(algorithm));
+//        kneserNey->n1 = n1;
 
-        if(order >0) recursiveReadFromFile(is, classDecoder);
+
+        if(order >0) 
+        {
+            KneserNey* kn = new KneserNey(recursiveReadFromFile(is, patternModel, classDecoder), order, patternModel, classDecoder, static_cast<KneserNey::Modification>(algorithm));
+            kn->n1 = n1;
+            kn->n2 = n2;
+            kn->n3 = n3;
+            kn->n4 = n4;
+            kn->Y = Y;
+            kn->D1 = D1;
+            kn->D2 = D2;
+            kn->D3plus = D3plus;
+            kn->tokens = tokens;
+            kn->m = m; //pointer maken?
+            return kn;
+        } else
+        {
+            KneserNey* kn = new KneserNey(nullptr, order, patternModel, classDecoder, static_cast<KneserNey::Modification>(algorithm));
+            kn->n1 = n1;
+            kn->n2 = n2;
+            kn->n3 = n3;
+            kn->n4 = n4;
+            kn->Y = Y;
+            kn->D1 = D1;
+            kn->D2 = D2;
+            kn->D3plus = D3plus;
+            kn->tokens = tokens;
+            kn->m = m; //pointer maken?
+            return kn;
+        }
     }
 
     static void writeToFile(KneserNey& kneserNey, const std::string& fileName, ClassDecoder* classDecoder = nullptr)
     {
         std::ofstream os;
         os.open(fileName);
-
         recursiveWriteToFile(kneserNey, os, classDecoder);
-
         os.close();
     }
 
@@ -196,7 +226,7 @@ struct KneserNeyFactory
         os << "M " << kneserNey.m.size() << "\n";
         for(const auto& iter: kneserNey.m)
         {
-            std::cout << iter.first.tostring(*classDecoder) << std::endl;
+//            std::cout << iter.first.tostring(*classDecoder) << std::endl;
             iter.first.write(&os);
             std::tuple<int, int, int, int> iterVals = iter.second;
             os << std::get<0>(iterVals) << " " << std::get<1>(iterVals) << " " << std::get<2>(iterVals) << " " << std::get<3>(iterVals) << "\n";

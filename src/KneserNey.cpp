@@ -26,7 +26,7 @@ KneserNey::KneserNey(KneserNey* kneserNey, int order, IndexedPatternModel<>* pat
                 , n(order+1), n1(0), n2(0), n3(0), n4(0), tokens(0)
                 , Y(0),  D1(0), D2(0), D3plus(0)
 {
-    std::cout << "Creating KN with ORDER:" << order << "(n=" << n << ")" <<  std::endl;
+    std::cout << "Special creation of KN with ORDER:" << order << "(n=" << n << ")" <<  std::endl;
     bra = kneserNey;
 
     if(!bra)

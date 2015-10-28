@@ -154,7 +154,7 @@ int main(int argc, char** argv)
 
         KneserNeyFactory::writeToFile(trainLanguageModel, "kneserney.out", collectionClassDecoderPtr);
         if(collectionClassDecoderPtr == nullptr) std::cout << "Kankerpointer" << std::endl;
-        KneserNeyFactory::readFromFile("kneserney.out", collectionClassDecoderPtr);
+        KneserNeyFactory::readFromFile("kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
 
 //	// ##################################################    Testing
 //	std::cout << indent(indentation++) << "+ Processing testing files" << std::endl;

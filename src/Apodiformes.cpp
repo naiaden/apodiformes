@@ -21,7 +21,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string/join.hpp>
 
-#include "VectorSpaceModel.h"
 #include "KneserNey.h"
 #include "TFIDF.h"
 #include "File.h"
@@ -103,7 +102,6 @@ int main(int argc, char** argv)
 
 //	KneserNey trainLanguageModel = KneserNey(collectionIndexedModelPtr, collectionClassDecoderPtr);
         KneserNey* kneserNeyPtr = KneserNeyFactory::readFromFile("kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
-        KneserNey trainLanguageModel = *kneserNeyPtr;
 
 //	// ##################################################    Training
 //	LOG(INFO) << indent(indentation++) << "+ Processing training files";
@@ -151,7 +149,8 @@ int main(int argc, char** argv)
 //        trainLanguageModel.recursiveComputeAllN(indentation+1);
 //	LOG(INFO) << indent(indentation) << "- Computing frequency stats for KN";
 //
-        trainLanguageModel.doSomething(indentation);
+//        trainLanguageModel.Something(indentation);
+        kneserNeyPtr->doSomething(indentation);
         //delete collectionClassDecoderPtr;
 
 

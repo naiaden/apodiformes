@@ -22,7 +22,7 @@ KneserNey::KneserNey(IndexedPatternModel<>* patternModel, ClassDecoder* classDec
 }
 
 KneserNey::KneserNey(KneserNey* kneserNey, int order, IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm )
-                : VectorSpaceModel(patternModel, classDecoder), algorithm(algorithm), order(order)
+                : classDecoder(classDecoder), patternModel(patternModel), algorithm(algorithm), order(order)
                 , n(order+1), n1(0), n2(0), n3(0), n4(0), tokens(0)
                 , Y(0),  D1(0), D2(0), D3plus(0)
 {
@@ -43,7 +43,7 @@ KneserNey::KneserNey(KneserNey* kneserNey, int order, IndexedPatternModel<>* pat
 }
 
 KneserNey::KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm )
-                : VectorSpaceModel(patternModel, classDecoder), algorithm(algorithm), order(order)
+                : classDecoder(classDecoder), patternModel(patternModel), algorithm(algorithm), order(order)
                 , n(order+1), n1(0), n2(0), n3(0), n4(0), tokens(0)
                 , Y(0),  D1(0), D2(0), D3plus(0)
 {

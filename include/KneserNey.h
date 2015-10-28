@@ -8,8 +8,9 @@
 #ifndef KNESERNEY_H_
 #define KNESERNEY_H_
 
-#include "VectorSpaceModel.h"
 #include <pattern.h>
+#include <patternmodel.h>
+#include <classdecoder.h>
 
 #include <fstream>
 
@@ -17,7 +18,7 @@
 /**
  * EVERYTHING IN LOG SPACE
  */
-class KneserNey: public VectorSpaceModel
+class KneserNey
 {
 friend class KneserNeyFactory;
 public:
@@ -62,7 +63,8 @@ public:
         double pkn(const Pattern& word, const Pattern& history, int indentation = 0);
         double pkn(const Pattern& pattern, int indentation = 0);
 protected:
-        
+        ClassDecoder* classDecoder;
+        IndexedPatternModel<>* patternModel;
         KneserNey* bra;
 private:
 	double n1, n2, n3, n4;
@@ -118,7 +120,7 @@ struct KneserNeyFactory
         std::ifstream is;
         is.open(fileName);
 
-        recursiveReadFromFile(is, patternModel, classDecoder);
+        return recursiveReadFromFile(is, patternModel, classDecoder);
 
         is.close();
 

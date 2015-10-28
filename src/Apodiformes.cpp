@@ -35,7 +35,7 @@ double perplexity(double sum, int instances)
 	return exp(-1.0*sum+dInstances*log(dInstances));
 }
 
-bool freshtrain = true;
+bool freshtrain = false;
 
 int main(int argc, char** argv)
 {
@@ -115,45 +115,29 @@ int main(int argc, char** argv)
 
             LOG(INFO) <<  "- Creating collection files";
 
-
-
-            BOOST_FOREACH( TrainFile tf, trainInputFiles )
-            {
-                    LOG(INFO) << "+ " << tf.getPath();
-                    LOG(INFO) << "+ Encoding document";
-                    ColibriFile documentCorpusFile = ColibriFile(tf.getFileName(false), "colibri.cls"
-                        , generatedDirectory, ColibriFile::Type::CORPUS); //documentClassFile
-                    ColibriFile documentEncodedFile = ColibriFile(tf.getFileName(true), "colibri.dat"
-                        , generatedDirectory, ColibriFile::Type::ENCODED);//inputFileName
-                    ColibriFile documentPatternFile = ColibriFile(tf.getFileName(false), "colibri.pattern"
-                        , generatedDirectory, ColibriFile::Type::PATTERNMODEL);
-
-
-                    const std::string command = colibriEncoder + " -d " + generatedDirectory + " -o " 
-                        + documentCorpusFile.getFileName(false) + " -c " + collectionCorpusFile.getPath() 
-                        + " " + tf.getPath();
-                    LOG(INFO) << "Executing command: " << command;
-                    system( command.c_str() );
-                    LOG(INFO) << "- Encoding done";
-
-
-                    LOG(INFO) << "+ Training on file: " << documentEncodedFile.getPath();
-                    IndexedPatternModel<> documentModel;
-                    documentModel.train(documentEncodedFile.getPath(), options);
-                    LOG(INFO) << "- Training on file";
-
-
-                    LOG(INFO) << "- " << tf.getPath();
-            }
-            LOG(INFO) << "- Processing training files";
-
+	    kneserNeyPtr = new KneserNey(collectionIndexedModelPtr, collectionClassDecoderPtr);
 
             LOG(INFO) << "+ Computing frequency stats for KN";
             kneserNeyPtr->recursiveComputeFrequencyStats(indentation+1);
             kneserNeyPtr->recursiveComputeAllN(indentation+1);
             LOG(INFO) << "- Computing frequency stats for KN";
+
+
+            LOG(INFO) << "Writing Kneser Ney model to file";
+            KneserNeyFactory::writeToFile(*kneserNeyPtr, "alice-kneserney.out", collectionClassDecoderPtr);
+        } else 
+        {
+            collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile.getPath());
+            collectionClassDecoderPtr = new ClassDecoder(collectionCorpusFile.getPath());
+            collectionIndexedModelPtr = new IndexedPatternModel<>(collectionPatternFile.getPath(), options); 
+
+            LOG(INFO) << "Reading Kneser Ney model from file";
+            kneserNeyPtr = KneserNeyFactory::readFromFile("alice-kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
         }
 
+        kneserNeyPtr->printMSize();
+
+        kneserNeyPtr->doSomething(indentation);
 /*
 
 
@@ -161,16 +145,11 @@ int main(int argc, char** argv)
 
 
 
-	kneserNeyPtr = new KneserNey(collectionIndexedModelPtr, collectionClassDecoderPtr);
 }  else 
 {
 
-	collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile.getPath());
-	collectionClassDecoderPtr = new ClassDecoder(collectionCorpusFile.getPath());
-        collectionIndexedModelPtr = new IndexedPatternModel<>(collectionPatternFile.getPath(), options); 
 
 
-        kneserNeyPtr = KneserNeyFactory::readFromFile("kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
 
 }
 
@@ -188,11 +167,9 @@ int main(int argc, char** argv)
 //	int docCntr = 0;
 //
 //        trainLanguageModel.Something(indentation);
-        kneserNeyPtr->doSomething(indentation);
         //delete collectionClassDecoderPtr;
 
 
-//      KneserNeyFactory::writeToFile(trainLanguageModel, "kneserney.out", collectionClassDecoderPtr);
 //      if(collectionClassDecoderPtr == nullptr) std::cout << "Kankerpointer" << std::endl;
 //      KneserNeyFactory::readFromFile("kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
 

@@ -26,7 +26,7 @@ KneserNey::KneserNey(KneserNey* kneserNey, int order, IndexedPatternModel<>* pat
                 , n(order+1), n1(0), n2(0), n3(0), n4(0), tokens(0)
                 , Y(0),  D1(0), D2(0), D3plus(0)
 {
-    std::cout << "Special creation of KN with ORDER:" << order << "(n=" << n << ")" <<  std::endl;
+    LOG(INFO) << "Special creation of KN with ORDER:" << order << "(n=" << n << ")";
     bra = kneserNey;
 
     if(!bra)
@@ -47,7 +47,7 @@ KneserNey::KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecode
                 , n(order+1), n1(0), n2(0), n3(0), n4(0), tokens(0)
                 , Y(0),  D1(0), D2(0), D3plus(0)
 {
-    std::cout << "Creating KN with ORDER:" << order << "(n=" << n << ")" <<  std::endl;
+    LOG(INFO) << "Creating KN with ORDER:" << order << "(n=" << n << ")";
     if(order >= 1)
     {
         bra = new KneserNey(order-1, patternModel, classDecoder, algorithm);
@@ -61,7 +61,7 @@ KneserNey::KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecode
                 tokens += patternModel->occurrencecount(iter.first);
             }
         }
-        std::cout << "UNIGRAM TOKENS: " << tokens << std::endl;
+        LOG(INFO) << "Found " << tokens << " unigram tokens";
     }
 
 }
@@ -69,6 +69,16 @@ KneserNey::KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecode
 
 void KneserNey::doSomething(int indentation)
 {
+        std::cout << "m contains " << m->size() << " items" << std::endl;
+        for(const auto& iter : *m)
+        {
+            if(iter.first.size() == 2)
+            {
+                std::cout << iter.first.tostring(*classDecoder) << std::endl;
+                std::tuple<int, int, int, int> asd = iter.second;
+                std::cout << "(" << std::get<0>(asd) << "," << std::get<1>(asd) << "," << std::get<2>(asd) << "," << std::get<3>(asd) << ")" << std::endl;
+            }
+        }
         int ctr = 0;
 
         for (const auto& iter : *patternModel) 
@@ -115,9 +125,9 @@ double KneserNey::pkn(const Pattern& word, const Pattern& history, int indentati
         int count = patternModel->occurrencecount(pattern);
         int marginalCount = std::get<3>((*m)[pattern]);
         double p1 = 1.0*(count - D(count))/marginalCount;
-        std::cout << indent(indentation+1) << "prob: " << p1 << " count: " << count << " marginal count: " << marginalCount << std::endl;
 
         double p2 = gamma(history)*bra->pkn(word, Pattern(history, 1, order-1), indentation);
+        std::cout << indent(indentation+1) << "prob: " << p1 << " backoff: " << p2 << " g: " << gamma(history) << " count: " << count << " marginal count: " << marginalCount << std::endl;
         rv = p1+p2;
         pkn_cache[pattern] = rv;
     } else
@@ -131,7 +141,9 @@ double KneserNey::pkn(const Pattern& word, const Pattern& history, int indentati
 
 double KneserNey::gamma(const Pattern& pattern)
 {
-    std::tuple<int, int, int, int> NValues = (*m)[pattern];
+    std::unordered_map<Pattern, std::tuple<int, int, int, int> >* lowerOrderM = bra->m;
+    std::tuple<int, int, int, int> NValues = (*lowerOrderM)[pattern];
+    std::cout << "[" << pattern.tostring(*classDecoder) << "] msize(" << lowerOrderM->size() << "/" << n << ")    g[" << std::get<0>(NValues) << "," << std::get<1>((*lowerOrderM)[pattern]) << "," << std::get<2>(NValues) << "," << std::get<3>(NValues) << "]" << std::endl;
     double p1 = D1 * std::get<0>(NValues) + D2 * std::get<1>(NValues) + D3plus * std::get<2>(NValues);
     return std::max(0.0, p1/std::get<3>(NValues));
 }   
@@ -173,7 +185,7 @@ void KneserNey::recursiveComputeFrequencyStats(int indentation)
  */
 void KneserNey::computeFrequencyStats(int indentation)
 {
-	std::cout << indent(indentation++) << "+ Entering computeFrequencyStats for n=" << n << std::endl;
+	LOG(INFO) << "+ Entering computeFrequencyStats for n=" << n;
 
 	int nulls = 0;
 	int total = 0;
@@ -189,7 +201,7 @@ void KneserNey::computeFrequencyStats(int indentation)
                 int value = patternModel->occurrencecount(pattern);
                 if (value < 0)
                 {
-                    std::cerr << "Unvalid occurence count value " << value << std::endl;
+                    LOG(FATAL) << "Unvalid occurence count value " << value;
                 }
 
                 tokens += value;
@@ -221,9 +233,9 @@ void KneserNey::computeFrequencyStats(int indentation)
         D2 = 2- 3*Y*(n3/n2);
         D3plus = 3- 4*Y*(n4/n3);
     
-	std::cout << indent(indentation+1) << "n: " << n << " [" << total << "] 1:" << n1 << " 2:" << n2 << " 3:" << n3 << " 4:" << n4 << std::endl;
-        std::cout << indent(indentation+1) << "n: " << n << " Y: " << Y << " D1: " << D1 << " D2: " << D2 << " D3+: " << D3plus << std::endl;
-	LOG(INFO) << indent(--indentation) << "- Leaving computeFrequencyStats";
+	LOG(INFO) << "n: " << n << " [" << total << "] 1:" << n1 << " 2:" << n2 << " 3:" << n3 << " 4:" << n4;
+        LOG(INFO) << "n: " << n << " Y: " << Y << " D1: " << D1 << " D2: " << D2 << " D3+: " << D3plus;
+	LOG(INFO) << "- Leaving computeFrequencyStats";
 }
 
 void KneserNey::iterativeComputeAllN(int indentation)
@@ -256,7 +268,7 @@ void KneserNey::iterativeComputeAllN(int indentation)
 
 void KneserNey::computeAllN(int indentation)
 {
-    std::cout << indent(indentation) << "+ Computing N values for n " << n << std::endl;
+    LOG(INFO) << "+ Computing N values for n " << n;
 
     int N1 = 0;
     int N2 = 0;
@@ -268,12 +280,22 @@ void KneserNey::computeAllN(int indentation)
     {
         if(iter.first.size() == n)
         {
-            if(ctr++ > 10) break;
+            //if(ctr++ > 10) break;
 //            if(ctr < 10) { std::cout << iter.first.tostring(*classDecoder) << std::endl;}
 
             N1 = 0; N2 = 0; N3plus = 0; marginalCount = 0;
             N(iter.first, N1, N2, N3plus, marginalCount);
+
+//            std::cout << std::endl << iter.first.tostring(*classDecoder) << std::endl;
+//std::cout << "y[" << N1 << "," << N2 << "," << N3plus << "," << marginalCount << "]" << std::endl;                                                                                     
+
+
             (*m)[iter.first] = std::tuple<int, int, int, int>(  N1, N2, N3plus, marginalCount);
+//std::tuple<int, int, int, int> NValues = (*m)[iter.first];
+//std::cout << "G[" << std::get<0>(NValues) << "," << std::get<1>(NValues) << "," << std::get<2>(NValues) << "," << std::get<3>(NValues) << "]" << std::endl;                                                                                     
+
+            gamma(iter.first);
+
         }
     }
 }

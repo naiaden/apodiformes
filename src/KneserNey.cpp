@@ -125,9 +125,7 @@ double KneserNey::pkn(const Pattern& word, const Pattern& history, int indentati
         int count = patternModel->occurrencecount(pattern);
         int marginalCount = std::get<3>((*m)[pattern]);
         double p1 = 1.0*(count - D(count))/marginalCount;
-
         double p2 = gamma(history)*bra->pkn(word, Pattern(history, 1, order-1), indentation);
-        std::cout << indent(indentation+1) << "prob: " << p1 << " backoff: " << p2 << " g: " << gamma(history) << " count: " << count << " marginal count: " << marginalCount << std::endl;
         rv = p1+p2;
         pkn_cache[pattern] = rv;
     } else
@@ -141,9 +139,7 @@ double KneserNey::pkn(const Pattern& word, const Pattern& history, int indentati
 
 double KneserNey::gamma(const Pattern& pattern)
 {
-    std::unordered_map<Pattern, std::tuple<int, int, int, int> >* lowerOrderM = bra->m;
-    std::tuple<int, int, int, int> NValues = (*lowerOrderM)[pattern];
-    std::cout << "[" << pattern.tostring(*classDecoder) << "] msize(" << lowerOrderM->size() << "/" << n << ")    g[" << std::get<0>(NValues) << "," << std::get<1>((*lowerOrderM)[pattern]) << "," << std::get<2>(NValues) << "," << std::get<3>(NValues) << "]" << std::endl;
+    std::tuple<int, int, int, int> NValues = (*(bra->m))[pattern];
     double p1 = D1 * std::get<0>(NValues) + D2 * std::get<1>(NValues) + D3plus * std::get<2>(NValues);
     return std::max(0.0, p1/std::get<3>(NValues));
 }   

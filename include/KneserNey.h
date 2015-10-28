@@ -59,12 +59,6 @@ public:
 
         double D(int c);
 
-        void printMSize()
-        {
-            std::cout << "M[" << n << "]: " << m->size() << std::endl;
-            if(bra) bra->printMSize();
-        }
-
         double pkn(const Pattern& word, const Pattern& history, int indentation = 0);
         double pkn(const Pattern& pattern, int indentation = 0);
         
@@ -176,7 +170,6 @@ struct KneserNeyFactory
             iss >> i1 >> i2 >> i3 >> i4;
             (*m)[p] = std::tuple<int, int, int, int>(i1, i2,i3, i4);
         }
-        std::cout << "whilst reading in, m has size " << m->size() << std::endl;
         if(order >0) 
         {
             KneserNey* kn = new KneserNey(recursiveReadFromFile(is, patternModel, classDecoder), order, patternModel, classDecoder, static_cast<KneserNey::Modification>(algorithm));

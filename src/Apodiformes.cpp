@@ -35,7 +35,7 @@ double perplexity(double sum, int instances)
 	return exp(-1.0*sum+dInstances*log(dInstances));
 }
 
-bool freshtrain = true;
+bool freshtrain = false;
 
 int main(int argc, char** argv)
 {

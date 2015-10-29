@@ -70,14 +70,15 @@ KneserNey::KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecode
 void KneserNey::doSomething(int indentation)
 {
         std::cout << "m contains " << m->size() << " items" << std::endl;
+        int ctr1 = 0;
         for(const auto& iter : *m)
         {
-            if(iter.first.size() == 2)
-            {
+            if(ctr1++ > 10) break;
+            
                 std::cout << iter.first.tostring(*classDecoder) << std::endl;
                 std::tuple<int, int, int, int> asd = iter.second;
                 std::cout << "(" << std::get<0>(asd) << "," << std::get<1>(asd) << "," << std::get<2>(asd) << "," << std::get<3>(asd) << ")" << std::endl;
-            }
+            
         }
         int ctr = 0;
 
@@ -123,7 +124,7 @@ double KneserNey::pkn(const Pattern& word, const Pattern& history, int indentati
         }
 
         int count = patternModel->occurrencecount(pattern);
-        int marginalCount = std::get<3>((*m)[pattern]);
+        int marginalCount = std::get<3>((*m)[history]);
         double p1 = 1.0*(count - D(count))/marginalCount;
         double p2 = gamma(history)*bra->pkn(word, Pattern(history, 1, order-1), indentation);
         rv = p1+p2;
@@ -139,7 +140,7 @@ double KneserNey::pkn(const Pattern& word, const Pattern& history, int indentati
 
 double KneserNey::gamma(const Pattern& pattern)
 {
-    std::tuple<int, int, int, int> NValues = (*(bra->m))[pattern];
+    std::tuple<int, int, int, int> NValues = (*m)[pattern];
     double p1 = D1 * std::get<0>(NValues) + D2 * std::get<1>(NValues) + D3plus * std::get<2>(NValues);
     return std::max(0.0, p1/std::get<3>(NValues));
 }   
@@ -274,12 +275,30 @@ void KneserNey::computeAllN(int indentation)
     int ctr = 0;
     for(const auto& iter: *patternModel )
     {
-        if(iter.first.size() == n)
+        
+        std::unordered_map<Pattern, std::tuple<int, int, int, int> >::const_iterator miter = m->find(iter.first);
+        if(miter == m->end() )
+        {
+            N1 = 0;
+            N2 = 0;
+            N3plus = 0;
+            marginalCount = 0;
+            (*m)[iter.first] = std::tuple<int, int, int, int>(N1, N2, N3plus, marginalCount);
+        } else
+        {
+            std::tuple<int, int, int, int> t = miter->second;
+            N1 = std::get<0>(t);
+            N2 = std::get<1>(t);
+            N3plus = std::get<2>(t);
+            marginalCount = std::get<3>(t);
+        }
+
+        if(iter.first.size() == n-1)
         {
             //if(ctr++ > 10) break;
 //            if(ctr < 10) { std::cout << iter.first.tostring(*classDecoder) << std::endl;}
 
-            N1 = 0; N2 = 0; N3plus = 0; marginalCount = 0;
+//            N1 = 0; N2 = 0; N3plus = 0; marginalCount = 0;
             N(iter.first, N1, N2, N3plus, marginalCount);
 
 //            std::cout << std::endl << iter.first.tostring(*classDecoder) << std::endl;
@@ -290,7 +309,7 @@ void KneserNey::computeAllN(int indentation)
 //std::tuple<int, int, int, int> NValues = (*m)[iter.first];
 //std::cout << "G[" << std::get<0>(NValues) << "," << std::get<1>(NValues) << "," << std::get<2>(NValues) << "," << std::get<3>(NValues) << "]" << std::endl;                                                                                     
 
-            gamma(iter.first);
+//            gamma(iter.first);
 
         }
     }
@@ -298,21 +317,21 @@ void KneserNey::computeAllN(int indentation)
 
 double KneserNey::N(const Pattern& pattern, int& N1, int& N2, int& N3plus, int& marginalCount)
 {
-    Pattern history = Pattern(pattern, 0, n - 1);
+//    Pattern history = Pattern(pattern, 0, n - 1);
     
     int ctr = 0;
 
     
 
-        std::cout << "P in: " << pattern.tostring(*classDecoder) << std::endl;
+//        std::cout << "P in: " << pattern.tostring(*classDecoder) << std::endl;
     for(const auto& iter : *patternModel)
     {
     	const Pattern patternFromIndex = iter.first;
    
 
-    	if (patternFromIndex.n() == n && history == Pattern(patternFromIndex, 0, n - 1))
+    	if (patternFromIndex.n() == n && pattern == Pattern(patternFromIndex, 0, n - 1))
     	{
-        std::cout << "\t" << Pattern(patternFromIndex,0,n-1).tostring(*classDecoder) << std::endl;
+//        std::cout << "\t" << patternFromIndex.tostring(*classDecoder) << std::endl;
             int frequency = patternModel->occurrencecount(patternFromIndex);
             marginalCount += frequency;
             
@@ -338,7 +357,7 @@ double KneserNey::N(const Pattern& pattern, int& N1, int& N2, int& N3plus, int& 
             }
     	}
     }
-    std::cout << "N1: " << N1 << " N2: " << N2 << " N3+: " << N3plus << " marginal: " << marginalCount << std::endl;
+//    std::cout << pattern.tostring(*classDecoder) << " N1: " << N1 << " N2: " << N2 << " N3+: " << N3plus << " marginal: " << marginalCount << std::endl;
 }
 
 void KneserNey::recursiveComputeAllN(int indentation)

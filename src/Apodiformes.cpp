@@ -35,7 +35,7 @@ double perplexity(double sum, int instances)
 	return exp(-1.0*sum+dInstances*log(dInstances));
 }
 
-bool freshtrain = false;
+bool freshtrain = true;
 
 int main(int argc, char** argv)
 {
@@ -134,8 +134,6 @@ int main(int argc, char** argv)
             LOG(INFO) << "Reading Kneser Ney model from file";
             kneserNeyPtr = KneserNeyFactory::readFromFile("alice-kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
         }
-
-        kneserNeyPtr->printMSize();
 
         kneserNeyPtr->doSomething(indentation);
 /*

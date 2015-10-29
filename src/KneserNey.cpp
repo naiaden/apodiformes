@@ -304,12 +304,15 @@ double KneserNey::N(const Pattern& pattern, int& N1, int& N2, int& N3plus, int& 
 
     
 
+        std::cout << "P in: " << pattern.tostring(*classDecoder) << std::endl;
     for(const auto& iter : *patternModel)
     {
     	const Pattern patternFromIndex = iter.first;
-    
+   
+
     	if (patternFromIndex.n() == n && history == Pattern(patternFromIndex, 0, n - 1))
     	{
+        std::cout << "\t" << Pattern(patternFromIndex,0,n-1).tostring(*classDecoder) << std::endl;
             int frequency = patternModel->occurrencecount(patternFromIndex);
             marginalCount += frequency;
             
@@ -335,6 +338,7 @@ double KneserNey::N(const Pattern& pattern, int& N1, int& N2, int& N3plus, int& 
             }
     	}
     }
+    std::cout << "N1: " << N1 << " N2: " << N2 << " N3+: " << N3plus << " marginal: " << marginalCount << std::endl;
 }
 
 void KneserNey::recursiveComputeAllN(int indentation)

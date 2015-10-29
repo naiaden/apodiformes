@@ -69,28 +69,27 @@ KneserNey::KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecode
 
 void KneserNey::doSomething(int indentation)
 {
-        std::cout << "m contains " << m->size() << " items" << std::endl;
-        int ctr1 = 0;
-        for(const auto& iter : *m)
-        {
-            if(ctr1++ > 10) break;
-            
-                std::cout << iter.first.tostring(*classDecoder) << std::endl;
-                std::tuple<int, int, int, int> asd = iter.second;
-                std::cout << "(" << std::get<0>(asd) << "," << std::get<1>(asd) << "," << std::get<2>(asd) << "," << std::get<3>(asd) << ")" << std::endl;
-            
-        }
+//        std::cout << "m contains " << m->size() << " items" << std::endl;
+//        int ctr1 = 0;
+//        for(const auto& iter : *m)
+//        {
+//            if(ctr1++ > 10) break;
+//            
+//                std::cout << iter.first.tostring(*classDecoder) << std::endl;
+//                std::tuple<int, int, int, int> asd = iter.second;
+//                std::cout << "(" << std::get<0>(asd) << "," << std::get<1>(asd) << "," << std::get<2>(asd) << "," << std::get<3>(asd) << ")" << std::endl;
+//            
+//        }
         int ctr = 0;
 
         for (const auto& iter : *patternModel) 
         {
-            if (ctr++ > 20) break;
+//            if (ctr++ > 20) break;
 
             Pattern pattern = iter.first;
             if(pattern.size() == n)
             {
-                std::cout << pattern.tostring(*classDecoder) << std::endl;
-                std::cout << "pkn: " << pkn(pattern) << std::endl;
+                std::cout << "[" << pkn(pattern) << "]\t" << pattern.tostring(*classDecoder)  << std::endl;
             }
         }
 }
@@ -108,8 +107,8 @@ bool KneserNey::isOOV(const Pattern& pattern, int indentation)
 
 double KneserNey::pkn(const Pattern& word, const Pattern& history, int indentation)
 {
-    std::cout << indent(indentation) << "<" << n << "> Computing for word[" << word.tostring(*classDecoder)
-                                     << "] and history[" << history.tostring(*classDecoder) << "]" << std::endl;
+//    std::cout << indent(indentation) << "<" << n << "> Computing for word[" << word.tostring(*classDecoder)
+//                                     << "] and history[" << history.tostring(*classDecoder) << "]" << std::endl;
 
     Pattern pattern = history+word;
 
@@ -127,11 +126,12 @@ double KneserNey::pkn(const Pattern& word, const Pattern& history, int indentati
         int marginalCount = std::get<3>((*m)[history]);
         double p1 = 1.0*(count - D(count))/marginalCount;
         double p2 = gamma(history)*bra->pkn(word, Pattern(history, 1, order-1), indentation);
+//        std::cout << "[" << n << "] " << pattern.tostring(*classDecoder) << "(c" << count << ":m" << marginalCount << "/g" << gamma(history) << ")" << std::endl;
         rv = p1+p2;
         pkn_cache[pattern] = rv;
     } else
     {
-        std::cout << indent(indentation+1) << "Retrieving " << pattern.tostring(*classDecoder) << " from cache!" << std::endl;
+//        std::cout << indent(indentation+1) << "Retrieving " << pattern.tostring(*classDecoder) << " from cache!" << std::endl;
         rv = iter->second;
     }
 
@@ -142,6 +142,7 @@ double KneserNey::gamma(const Pattern& pattern)
 {
     std::tuple<int, int, int, int> NValues = (*m)[pattern];
     double p1 = D1 * std::get<0>(NValues) + D2 * std::get<1>(NValues) + D3plus * std::get<2>(NValues);
+//    std::cout << "-g " << std::get<0>(NValues) << "," << std::get<1>(NValues) << "," << std::get<2>(NValues) << "," << std::get<3>(NValues) << std::endl;
     return std::max(0.0, p1/std::get<3>(NValues));
 }   
 
@@ -346,13 +347,13 @@ double KneserNey::N(const Pattern& pattern, int& N1, int& N2, int& N3plus, int& 
             	case 0:
                     break;
             	case 1:
-            	    N1 += frequency;
+            	    N1 += 1;//frequency;
             	    break;
             	case 2:
-            	    N2 += frequency;
+            	    N2 += 1;//frequency;
             	    break;
             	default:
-            	    N3plus += frequency;
+            	    N3plus += 1;//frequency;
             	    break;
             }
     	}

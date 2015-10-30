@@ -149,67 +149,36 @@ int main(int argc, char** argv)
                 pknSum += pkn;
                 std::cout << pkn << "\t" << newP.tostring(*collectionClassDecoderPtr) << std::endl;
             }
-//           if(iter.first.size() == 4 && Pattern(iter.first, 0, 3) == intoA)
-//           {
-//                double pkn = kneserNeyPtr->pkn(iter.first, true);
-//                pknSum += pkn;
-//                std::cout << pkn << "\t" << iter.first.tostring(*collectionClassDecoderPtr) << std::endl;
-//           }
         }
         std::cout << "SUM: " << pknSum <<std::endl;
-//
-//for (const auto& iter : *patternModel)                                                             
-//{                                                                                                  
-//      if (ctr++ > 20) break;                                                                       
-//                                                                                                   
-//    Pattern pattern = iter.first;                                                                  
-//    if(pattern.size() == n)                                                                        
-//    {                                                                                              
-//        std::cout << "[" << pkn(pattern) << "]\t" << pattern.tostring(*classDecoder)  << std::endl;
-//    }                                                                                              
-//}                                                                                                  
 
-
-
-
-/*
-
-
-
-
-
-
-}  else 
-{
-
-
-
-
-}
-
+        LOG(INFO) << "Processing testing files";
         std::vector<TestFile> testInputFiles = std::vector<TestFile>();
 	testInputFiles.push_back(TestFile("test", "tok", inputDirectory));
 
+        int numberOfTestPatterns = 0;
+        int numberOfOOV = 0;
+        double totalProbs = 0.0;
+
+        for(const auto& testFile: testInputFiles)
+        {
+            collectionClassEncoderPtr->encodefile(testFile.getPath(), "TESTING.dat", 1, 1, 0, 1);
+        }
+        collectionClassEncoderPtr->save("TESTING.cls");
+        collectionClassDecoderPtr->load("TESTING.cls");
+
+        PatternSet<uint64_t> allPatterns;
+        {
+            PatternModel<uint32_t> _train_pattern_model(collectionPatternFile.getPath(), options);
+            allPatterns = _train_pattern_model.extractset();
+        }
 
 
+	std::cout << "Perplexity is " << perplexity(totalProbs, double(numberOfTestPatterns)) << std::endl;
+        
+/*
 
 
-
-//	// ##################################################    Training
-//	LOG(INFO) << indent(indentation++) << "+ Processing training files";
-//
-//	int docCntr = 0;
-//
-//        trainLanguageModel.Something(indentation);
-        //delete collectionClassDecoderPtr;
-
-
-//      if(collectionClassDecoderPtr == nullptr) std::cout << "Kankerpointer" << std::endl;
-//      KneserNeyFactory::readFromFile("kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
-
-//	// ##################################################    Testing
-//	std::cout << indent(indentation++) << "+ Processing testing files" << std::endl;
-//
 //	double corpusProbability = 0;
 //	int numberOfTestPatterns = 0;
 //
@@ -268,7 +237,6 @@ int main(int argc, char** argv)
 //
 //
 //
-//	std::cout << "Perplexity is " << perplexity(corpusProbability, double(numberOfTestPatterns)) << std::endl;
 
 
 

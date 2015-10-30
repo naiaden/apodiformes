@@ -39,7 +39,7 @@ public:
 		MKN, MKNC, MKNE, MKND, MKNF
 	};
 
-        void doSomething(int indentation = 0);
+        void doSomething();
 
 	Modification algorithm;
 
@@ -47,20 +47,20 @@ public:
 	KneserNey(KneserNey* kneserNey, int order, IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm = Modification::MKN);
 	KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecoder* classDecoder, Modification algorithm = Modification::MKN);
 
-	void computeFrequencyStats(int indentation = 0);
-        void recursiveComputeFrequencyStats(int indentation = 0);
-        void computeAllN(int indentation = 0);
-        void recursiveComputeAllN(int indentation = 0);
-        void iterativeComputeAllN(int indentation = 0);
+	void computeFrequencyStats();
+        void recursiveComputeFrequencyStats();
+        void computeAllN();
+        void recursiveComputeAllN();
+        void iterativeComputeAllN();
 
-        double gamma(const Pattern& pattern);
+        double gamma(const Pattern& pattern, bool debug = false);
        
-        bool isOOV(const Pattern& pattern, int indentation = 0);
+        bool isOOV(const Pattern& pattern);
 
         double D(int c);
 
-        double pkn(const Pattern& word, const Pattern& history, int indentation = 0);
-        double pkn(const Pattern& pattern, int indentation = 0);
+        double pkn(const Pattern& word, const Pattern& history, bool debug = false);
+        double pkn(const Pattern& pattern, bool debug = false);
         
         std::unordered_map<Pattern, std::tuple<int, int, int, int> >* m = new std::unordered_map<Pattern, std::tuple<int, int, int, int> >();
 protected:

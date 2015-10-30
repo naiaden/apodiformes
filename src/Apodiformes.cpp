@@ -118,8 +118,8 @@ int main(int argc, char** argv)
 	    kneserNeyPtr = new KneserNey(collectionIndexedModelPtr, collectionClassDecoderPtr);
 
             LOG(INFO) << "+ Computing frequency stats for KN";
-            kneserNeyPtr->recursiveComputeFrequencyStats(indentation+1);
-            kneserNeyPtr->recursiveComputeAllN(indentation+1);
+            kneserNeyPtr->recursiveComputeFrequencyStats();
+            kneserNeyPtr->recursiveComputeAllN();
             LOG(INFO) << "- Computing frequency stats for KN";
 
 
@@ -135,7 +135,43 @@ int main(int argc, char** argv)
             kneserNeyPtr = KneserNeyFactory::readFromFile("alice-kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
         }
 
-        kneserNeyPtr->doSomething(indentation);
+        kneserNeyPtr->doSomething();
+
+        Pattern intoA = collectionClassEncoderPtr->buildpattern("' cried the");
+        std::cout << "Created pattern: " << intoA.tostring(*collectionClassDecoderPtr) << std::endl;
+        double pknSum = 0.0;
+        for(const auto& iter: *collectionIndexedModelPtr)
+        {
+            if(iter.first.size() == 1)
+            {
+                Pattern newP = intoA + iter.first;
+                double pkn = kneserNeyPtr->pkn(newP, true);
+                pknSum += pkn;
+                std::cout << pkn << "\t" << newP.tostring(*collectionClassDecoderPtr) << std::endl;
+            }
+//           if(iter.first.size() == 4 && Pattern(iter.first, 0, 3) == intoA)
+//           {
+//                double pkn = kneserNeyPtr->pkn(iter.first, true);
+//                pknSum += pkn;
+//                std::cout << pkn << "\t" << iter.first.tostring(*collectionClassDecoderPtr) << std::endl;
+//           }
+        }
+        std::cout << "SUM: " << pknSum <<std::endl;
+//
+//for (const auto& iter : *patternModel)                                                             
+//{                                                                                                  
+//      if (ctr++ > 20) break;                                                                       
+//                                                                                                   
+//    Pattern pattern = iter.first;                                                                  
+//    if(pattern.size() == n)                                                                        
+//    {                                                                                              
+//        std::cout << "[" << pkn(pattern) << "]\t" << pattern.tostring(*classDecoder)  << std::endl;
+//    }                                                                                              
+//}                                                                                                  
+
+
+
+
 /*
 
 

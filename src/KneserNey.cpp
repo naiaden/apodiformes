@@ -35,7 +35,7 @@ KneserNey::KneserNey(KneserNey* kneserNey, int order, IndexedPatternModel<>* pat
         {
             if(iter.first.size() == 1)
             {
-                tokens += patternModel->occurrencecount(iter.first);
+      //          tokens += patternModel->occurrencecount(iter.first);
             }
         }
     }
@@ -58,7 +58,7 @@ KneserNey::KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecode
         {
             if(iter.first.size() == 1)
             {
-                tokens += patternModel->occurrencecount(iter.first);
+     //           tokens += patternModel->occurrencecount(iter.first);
             }
         }
         LOG(INFO) << "Found " << tokens << " unigram tokens";
@@ -101,6 +101,11 @@ double KneserNey::pkn(const Pattern& pattern, bool debug)
     return pkn(Pattern(pattern, order, 1), Pattern(pattern, 0, order), debug);
 }
 
+bool KneserNey::isOOVWord(const Pattern& word)
+{
+    return !patternModel->has(word);
+}
+
 bool KneserNey::isOOV(const Pattern& pattern)
 {
     
@@ -129,7 +134,7 @@ double KneserNey::pkn(const Pattern& word, const Pattern& history, bool debug)
 
         int count = patternModel->occurrencecount(pattern);
         int marginalCount = std::get<3>((*m)[history]);
-        double p1 = 1.0*(count - D(count))/marginalCount;
+        double p1 = std::max(0.0, 1.0*(count - D(count))/marginalCount);
         double ptemp =bra->pkn(word, Pattern(history, 1, order-1), debug); 
         double gammaa = gamma(history, true);
         double p2 = gammaa*ptemp;
@@ -200,6 +205,7 @@ void KneserNey::recursiveComputeFrequencyStats()
 void KneserNey::computeFrequencyStats()
 {
 	LOG(INFO) << "+ Entering computeFrequencyStats for n=" << n;
+	std::cout << "+ Entering computeFrequencyStats for n=" << n << std::endl;
 
 	int nulls = 0;
 	int total = 0;
@@ -208,7 +214,7 @@ void KneserNey::computeFrequencyStats()
         {
             Pattern pattern = iter.first;
 
-            if(pattern.size() == n-1) 
+            if(pattern.size() == n) 
             {
                 ++total;
 
@@ -247,6 +253,9 @@ void KneserNey::computeFrequencyStats()
         D2 = 2- 3*Y*(n3/n2);
         D3plus = 3- 4*Y*(n4/n3);
     
+	std::cout << "n: " << n << " [" << total << "] 1:" << n1 << " 2:" << n2 << " 3:" << n3 << " 4:" << n4 << std::endl;
+        std::cout << "n: " << n << " Y: " << Y << " D1: " << D1 << " D2: " << D2 << " D3+: " << D3plus << std::endl;
+	std::cout << "- Leaving computeFrequencyStats" << std::endl;
 	LOG(INFO) << "n: " << n << " [" << total << "] 1:" << n1 << " 2:" << n2 << " 3:" << n3 << " 4:" << n4;
         LOG(INFO) << "n: " << n << " Y: " << Y << " D1: " << D1 << " D2: " << D2 << " D3+: " << D3plus;
 	LOG(INFO) << "- Leaving computeFrequencyStats";
@@ -283,6 +292,7 @@ void KneserNey::iterativeComputeAllN()
 void KneserNey::computeAllN()
 {
     LOG(INFO) << "+ Computing N values for n " << n;
+    std::cout << "+ Computing N values for n " << std::endl;
 
     int N1 = 0;
     int N2 = 0;
@@ -352,10 +362,10 @@ double KneserNey::N(const Pattern& pattern, int& N1, int& N2, int& N3plus, int& 
             int frequency = patternModel->occurrencecount(patternFromIndex);
             marginalCount += frequency;
             
-            if(!patternFromIndex.tostring(*classDecoder).compare("a"))
-            {
-                std::cout << "Computing N for a. Freq " << frequency << " and marg count " << marginalCount << std::endl;
-            }
+//            if(!patternFromIndex.tostring(*classDecoder).compare("a"))
+//            {
+//                std::cout << "Computing N for a. Freq " << frequency << " and marg count " << marginalCount << std::endl;
+//            }
 //             if(ctr < 10) { std::cout << "Patt [" << pattern.tostring(*classDecoder) << "] "
 //                                      << "newP [" << history.tostring(*classDecoder) << "] "
 //                                      << "Pfin [" << patternFromIndex.tostring(*classDecoder) << "] "

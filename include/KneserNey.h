@@ -56,6 +56,7 @@ public:
         double gamma(const Pattern& pattern, bool debug = false);
        
         bool isOOV(const Pattern& pattern);
+        bool isOOVWord(const Pattern& word);
 
         double D(int c);
 

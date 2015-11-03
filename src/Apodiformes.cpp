@@ -130,84 +130,85 @@ int main(int argc, char** argv)
 	    kneserNeyPtr = new KneserNey(collectionIndexedModelPtr, collectionClassDecoderPtr);
 
             LOG(INFO) << "+ Computing frequency stats for KN";
-            kneserNeyPtr->recursiveComputeFrequencyStats();
-            kneserNeyPtr->recursiveComputeAllN(collectionClassEncoderPtr->buildpattern(". '"));
+            kneserNeyPtr->recursivePrecomputeContextValues();
+ //           kneserNeyPtr->recursiveComputeFrequencyStats();
+ //           kneserNeyPtr->recursiveComputeAllN(collectionClassEncoderPtr->buildpattern(". '"));
             LOG(INFO) << "- Computing frequency stats for KN";
 
 
             LOG(INFO) << "Writing Kneser Ney model to file";
-            KneserNeyFactory::writeToFile(*kneserNeyPtr, "alice-kneserney.out", collectionClassDecoderPtr);
-        } else 
-        {
-            collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile.getPath());
-            collectionClassDecoderPtr = new ClassDecoder(collectionCorpusFile.getPath());
-            collectionIndexedModelPtr = new IndexedPatternModel<>(collectionPatternFile.getPath(), options); 
-
-            LOG(INFO) << "Reading Kneser Ney model from file";
-            kneserNeyPtr = KneserNeyFactory::readFromFile("alice-kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
+//            KneserNeyFactory::writeToFile(*kneserNeyPtr, "alice-kneserney.out", collectionClassDecoderPtr);
+//        } else 
+//        {
+//            collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile.getPath());
+//            collectionClassDecoderPtr = new ClassDecoder(collectionCorpusFile.getPath());
+//            collectionIndexedModelPtr = new IndexedPatternModel<>(collectionPatternFile.getPath(), options); 
+//
+//            LOG(INFO) << "Reading Kneser Ney model from file";
+//            kneserNeyPtr = KneserNeyFactory::readFromFile("alice-kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
         }
 
-        LOG(INFO) << "Processing testing files";
-        std::vector<TestFile> testInputFiles = std::vector<TestFile>();
-	testInputFiles.push_back(TestFile("test1", "tok", inputDirectory));
-
-        int numberOfTestPatterns = 0;
-        int numberOfOOV = 0;
-        double totalProbs = 0.0;
-
-        for(const auto& testFile: testInputFiles)
-        {
-            collectionClassEncoderPtr->encodefile(testFile.getPath(), "TESTING.dat", 1, 1, 0, 1);
-        }
-        collectionClassEncoderPtr->save("TESTING.cls");
-        collectionClassDecoderPtr->load("TESTING.cls");
-
-        for(const auto& testFile: testInputFiles)
-        {
-            std::ifstream file(testFile.getPath());
-
-            std::string retrievedString;
-            while(std::getline(file, retrievedString))
-            {
-                std::vector<std::string> words = split(retrievedString);
-
-                if(words.size() < options.MAXLENGTH)
-                {
-                    //
-                } else
-                {
-                    for(int i = (options.MAXLENGTH-1); i < words.size(); ++i)
-                    {
-                        std::stringstream contextStream;
-                        contextStream << words[i-(options.MAXLENGTH-1)];
-                        for(int ii= 1; ii < (options.MAXLENGTH-1); ++ii)
-                        {
-                            contextStream << " " << words[i-(options.MAXLENGTH-1)+ii];
-                        }
-
-                        Pattern context  = collectionClassEncoderPtr->buildpattern(contextStream.str());
-                        Pattern focus = collectionClassEncoderPtr->buildpattern(words[i]);
-
-                        double prob = kneserNeyPtr->pkn(context+focus,debug);
-
-                        ++numberOfTestPatterns;
-                        if(kneserNeyPtr->isOOVWord(focus))
-                        {
-                            std::cout << "*** ";
-                            ++numberOfOOV;
-                            prob = 0.0;
-                        }
-                        totalProbs += prob;
-                        std::cout << "p(" << focus.tostring(*collectionClassDecoderPtr) << "|";
-                        std::cout << context.tostring(*collectionClassDecoderPtr) << "): ";
-                        std::cout << prob << std::endl;
-                    }
-                }
-            }
-        }
-
-	std::cout << "Perplexity is " << perplexity(totalProbs, numberOfTestPatterns,numberOfOOV) << std::endl;
-        
+//        LOG(INFO) << "Processing testing files";
+//        std::vector<TestFile> testInputFiles = std::vector<TestFile>();
+//	testInputFiles.push_back(TestFile("test1", "tok", inputDirectory));
+//
+//        int numberOfTestPatterns = 0;
+//        int numberOfOOV = 0;
+//        double totalProbs = 0.0;
+//
+//        for(const auto& testFile: testInputFiles)
+//        {
+//            collectionClassEncoderPtr->encodefile(testFile.getPath(), "TESTING.dat", 1, 1, 0, 1);
+//        }
+//        collectionClassEncoderPtr->save("TESTING.cls");
+//        collectionClassDecoderPtr->load("TESTING.cls");
+//
+//        for(const auto& testFile: testInputFiles)
+//        {
+//            std::ifstream file(testFile.getPath());
+//
+//            std::string retrievedString;
+//            while(std::getline(file, retrievedString))
+//            {
+//                std::vector<std::string> words = split(retrievedString);
+//
+//                if(words.size() < options.MAXLENGTH)
+//                {
+//                    //
+//                } else
+//                {
+//                    for(int i = (options.MAXLENGTH-1); i < words.size(); ++i)
+//                    {
+//                        std::stringstream contextStream;
+//                        contextStream << words[i-(options.MAXLENGTH-1)];
+//                        for(int ii= 1; ii < (options.MAXLENGTH-1); ++ii)
+//                        {
+//                            contextStream << " " << words[i-(options.MAXLENGTH-1)+ii];
+//                        }
+//
+//                        Pattern context  = collectionClassEncoderPtr->buildpattern(contextStream.str());
+//                        Pattern focus = collectionClassEncoderPtr->buildpattern(words[i]);
+//
+//                        double prob = kneserNeyPtr->pkn(context+focus,debug);
+//
+//                        ++numberOfTestPatterns;
+//                        if(kneserNeyPtr->isOOVWord(focus))
+//                        {
+//                            std::cout << "*** ";
+//                            ++numberOfOOV;
+//                            prob = 0.0;
+//                        }
+//                        totalProbs += prob;
+//                        std::cout << "p(" << focus.tostring(*collectionClassDecoderPtr) << "|";
+//                        std::cout << context.tostring(*collectionClassDecoderPtr) << "): ";
+//                        std::cout << prob << std::endl;
+//                    }
+//                }
+//            }
+//        }
+//
+//	std::cout << "Perplexity is " << perplexity(totalProbs, numberOfTestPatterns,numberOfOOV) << std::endl;
+//        
 /*
 
 

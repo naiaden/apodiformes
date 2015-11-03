@@ -354,9 +354,28 @@ double KneserNey::N(const Pattern& pattern, int& N1, int& N2, int& N3plus, int& 
     for(const auto& iter : *patternModel)
     {
     	const Pattern patternFromIndex = iter.first;
-   
+ 
 
-    	if (patternFromIndex.n() == n && pattern == Pattern(patternFromIndex, 0, n - 1))
+
+//        std::cout << "Created pattern: " << intoA.tostring(*collectionClassDecoderPtr) << std::endl;
+//        double pknSum = 0.0;
+//        for(const auto& iter: *collectionIndexedModelPtr)
+//        {
+//            if(iter.first.size() == 1)
+//            {
+//                Pattern newP = intoA + iter.first;
+//                double pkn = kneserNeyPtr->pkn(newP, true);
+//                pknSum += pkn;
+//                std::cout << pkn << "\t" << newP.tostring(*collectionClassDecoderPtr) << std::endl;
+//            }
+//        }
+//        std::cout << "SUM: " << pknSum <<std::endl;
+
+
+
+
+
+    	if (patternFromIndex.n() == n-1 && pattern == Pattern(patternFromIndex, 0, n - 1))
     	{
 //        std::cout << "\t" << patternFromIndex.tostring(*classDecoder) << std::endl;
             int frequency = patternModel->occurrencecount(patternFromIndex);

@@ -48,78 +48,72 @@ KneserNey::KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecode
 }
 
 
-double KneserNey::pkn(const Pattern& word, const Pattern& history, bool debug)
+double KneserNey::pkn(const Pattern& pattern, const Pattern& word, const Pattern& history, bool debug)
 {
+    if(n == MAXLEVEL)
+    {
+        int count_WXYZ = patternModel->occurrencecount(pattern);
+        double prob = std::max(0.0, (count_WXYZ-D(count_WXYZ))/patternModel->occurrencecount(history));
+        Pattern XY = Pattern(history, 1, n-1);
+        double interpolation = gamma(history);
+        double backoff = bra->pkn(XY+word, word, XY, debug); 
+        std::cout << "[" << n << "] Count(" << pattern.tostring(*classDecoder) << "):" << count_WXYZ << " prob:" << prob << " interpolation:" << interpolation << " backoff:" << backoff << std::endl;
+        return prob+interpolation*backoff;
+    } else if(n == 1) // unigram
+    {
+        Pattern Z = word;
+
+        double N1p_oZ = 0;
+        const auto& ZIter = contextValues_n1p_oXYZ->find(Z);
+        if(ZIter != contextValues_n1p_oXYZ->end()) N1p_oZ = ZIter->second;
+
+        double N1p_oo = 0;
+        const auto& Iter = contextValues_n1p_oXYo->find(Pattern());
+        if(Iter != contextValues_n1p_oXYo->end()) N1p_oo = Iter->second;
+
+        std::cout << "[" << n << "] N1p(o" << Z.tostring(*classDecoder) << "):" << N1p_oZ << " N1p(oo):" << N1p_oo << std::endl;
+
+        return std::max(0.0, (N1p_oZ - D(patternModel->occurrencecount(word)))/N1p_oo);
+    } else
+    {
+        int count_XYZ = patternModel->occurrencecount(pattern);
+        
+        Pattern XY = history;
+        int N1p_oXYo = 0;
+        const auto& XYiter = contextValues_n1p_oXYo->find(XY);
+        if(XYiter != contextValues_n1p_oXYo->end()) N1p_oXYo = XYiter->second;
+
+        Pattern XYZ = pattern;
+        int N1p_oXYZ = 0;
+        const auto& XYZiter = contextValues_n1p_oXYZ->find(XYZ);
+        if(XYZiter != contextValues_n1p_oXYZ->end()) N1p_oXYZ = XYZiter->second;
+        
+        
+        double prob = std::max(0.0, N1p_oXYZ-D(count_XYZ)/N1p_oXYo);
+        double interpolation = gamma(history);
+        Pattern Y = Pattern(history, 1, n-1);
+        double backoff = bra->pkn(Y+word, word, Y, debug);
+        std::cout << "[" << n << "] N1p(o" << XY.tostring(*classDecoder) << "o):" << N1p_oXYo << " prob:" << prob << " interpolation:" << interpolation << " backoff:" << backoff << std::endl;
+        return prob+interpolation*backoff;
+    }
+
     return 0.0;
-//    Pattern pattern = history+word;
-//
-//    if(debug)
-//    {
-//        std::cout << "[" << n << "] Word: " << word.tostring(*classDecoder) << " History: " << history.tostring(*classDecoder) << "(" << pattern.tostring(*classDecoder) << ")" << std::endl;
-//    }
-//
-//    double rv = 0.0;
-//
-//    std::unordered_map<Pattern, double>::const_iterator iter = pkn_cache.find(pattern);
-//    if(iter == pkn_cache.end() )
-//    {
-//        if(n == 1) //unigram
-//        {
-//            if(debug) std::cout << "\t[" << n << "] " << patternModel->occurrencecount(word) << "/" << tokens << "=" << patternModel->occurrencecount(word)/tokens << std::endl;
-//            return patternModel->occurrencecount(word)/tokens;
-//        }
-//
-//        if(debug) 
-//        {   
-//            int count = patternModel->occurrencecount(pattern);
-//            int marginalCount = std::get<3>((*m)[history]);
-//            double p1 = std::max(0.0, 1.0*(count - D(count))/marginalCount);
-//            double ptemp =bra->pkn(word, Pattern(history, 1, order-1), debug); 
-//            double gammaa = gamma(history, true);
-//            double p2 = gammaa*ptemp;
-//                std::cout << "\t[" << n << "] c(w^i_i-n+1) = c(" << pattern.tostring(*classDecoder) << ") = " << count << std::endl;
-//                std::cout << "\t[" << n << "] (" << count << "-" << D(count) << ")/" << marginalCount << " + " << gammaa << "*" << ptemp << std::endl;
-//                std::cout << "\t[" << n << "]\t" << p1 << "+" << p2 << "=" << p1+p2 << std::endl;
-//            rv = p1+p2;
-//            pkn_cache[pattern] = rv;
-//        } else
-//        {
-//            int count = patternModel->occurrencecount(pattern);
-//            double p1 = std::max(0.0, 1.0*(count - D(count))/std::get<3>((*m)[history]));
-//            double p2 = gamma(history, debug)*bra->pkn(word, Pattern(history, 1, order-1), debug);
-//            rv = p1 + p2;
-//            pkn_cache[pattern] = rv;
-//        }
-//    } else
-//    {
-//        rv = iter->second;
-//    }
-//
-//    return rv;
 }
 
-double KneserNey::gamma(const Pattern& pattern, bool lowerOrder, bool debug)
+double KneserNey::gamma(const Pattern& history, bool debug)
 {
-    return 0.0;
-//    std::tuple<int, int, int, int> NValues = (*m)[pattern];
-//    double p1 = D1 * std::get<0>(NValues) + D2 * std::get<1>(NValues) + D3plus * std::get<2>(NValues);
-//
-//    if(debug)
-//    {
-//        std::cout << "[" << n << "]\t [" << pattern.tostring(*classDecoder) << "] gamma (" << D1 << "*" << std::get<0>(NValues) << "+" << D2 << "*" << std::get<1>(NValues) << "+" << D3plus << "*" << std::get<2>(NValues) << ")/" << std::get<3>(NValues) << std::endl;
-//    }
-//    
-//    if(lowerOrder)
-//    {
-//        return std::max(0.0, p1/Pattern) // (D_1*N_1(w(i-1,i-n+1) .) + D_2*N_2(w(i-1,i-n+1) .) + D_3*N_3(w(i-1,i-n+1) .)) / N_1+(. w(i-1,i-n+1) .)
-//    }
-//    
-//    return std::max(0.0, p1/std::get<3>(NValues)); // D_1*N_1(w(i-1,i-n+1) .) + D_2*N_2(w(i-1,i-n+1) .) + D_3*N_3(w(i-1),i-n+1) .)) / c(w(i-1,i-n+1)
+    std::tuple<int, int, int> values = (*contextValues)[history];
+    double p1 = D1 * std::get<0>(values) + D2 * std::get<1>(values) + D3plus * std::get<2>(values);
+
+    if(n == MAXLEVEL)
+    {
+        return std::max(0.0, p1/patternModel->occurrencecount(history));
+    } else
+    {
+        return 0.0; //dit klopt niet. Check wat het wel moet zijn.
+    }
 }   
 
-/**
- * Discount
- */
 double KneserNey::D(int c)
 {
     if(c < 0) 
@@ -152,7 +146,7 @@ void KneserNey::recursiveComputeFrequencyStats()
 void KneserNey::recursivePrecomputeContextValues()
 {
     precomputeContextValues();
-    if(n > 2)
+    if(n > 1)
     {
         bra->recursivePrecomputeContextValues();
     }
@@ -162,7 +156,47 @@ void KneserNey::precomputeContextValues()
 {
     std::cout << "+ Precomputing context values for n " << n << " (of " << MAXLEVEL << ")" << std::endl;
 
-    if(n == MAXLEVEL)
+    if(n == 1)
+    {
+        int N1p_oZ = 0;
+        int N1p_oo = 0;
+
+        for(const auto& iter: *patternModel)
+        {
+            if(iter.first.size() == 2)
+            {
+                Pattern YZ = iter.first;
+                Pattern Z = Pattern(YZ, 1, 1);
+
+                const auto& ZIter = contextValues_n1p_oXYZ->find(Z);
+                if(ZIter == contextValues_n1p_oXYZ->end())
+                {
+                    N1p_oZ = 0;
+                } else 
+                {
+                    N1p_oZ = ZIter->second;
+                }
+                
+                int freq_oZ = patternModel->occurrencecount(YZ);
+                if(freq_oZ) ++N1p_oZ;
+                (*contextValues_n1p_oXYZ)[Z] = N1p_oZ;
+
+                const auto& Iter = contextValues_n1p_oXYo->find(Pattern());
+                if(Iter == contextValues_n1p_oXYo->end())
+                {
+                    N1p_oo = 0;
+                } else
+                {
+                    N1p_oo = Iter->second;
+                }
+
+                int freq_oo = patternModel->occurrencecount(YZ);
+                if(freq_oo) ++N1p_oo;
+                (*contextValues_n1p_oXYo)[Pattern()] = N1p_oo;
+
+            }
+        }
+    } else if(n == MAXLEVEL)
     {
         // als n=4
         int N1_WXYo = 0;
@@ -287,53 +321,15 @@ void KneserNey::precomputeContextValues()
                 (*contextValues)[XY] = std::tuple<int, int, int>(N1_XYo, N2_XYo, N3p_XYo);
             }
         }
-        for(const auto& iter: *contextValues)
-        {
-            std::tuple<int, int, int> values = iter.second;
-            std::cout << iter.first.tostring(*classDecoder) << ": [" << std::get<0>(values) << "," << std::get<1>(values) << "," << std::get<2>(values) << ";" << (*contextValues_n1p_oXYZ)[iter.first] << "," << (*contextValues_n1p_oXYo)[iter.first] << "]" << std::endl;
-        }
+//        for(const auto& iter: *contextValues)
+//        {
+//            std::tuple<int, int, int> values = iter.second;
+//            std::cout << iter.first.tostring(*classDecoder) << ": [" << std::get<0>(values) << "," << std::get<1>(values) << "," << std::get<2>(values) << ";" << (*contextValues_n1p_oXYZ)[iter.first] << "," << (*contextValues_n1p_oXYo)[iter.first] << "]" << std::endl;
+//        }
     }
     std::cout << "- Precomputing context values for n " << n << " (of " << MAXLEVEL << ")" << std::endl;
 }
 
-double KneserNey::N(const Pattern& pattern, int& N1, int& N2, int& N3plus, int& marginalCount, const Pattern& p)
-{
-    for(const auto& iter : *patternModel)
-    {
-    	const Pattern patternFromIndex = iter.first;
-        if(patternFromIndex.size() == n-1 )
-        {
-            Pattern smallerPattern = Pattern(pattern, 0, n-1);
-
-            if (patternFromIndex == smallerPattern)
-            {
-                 if(p == smallerPattern) std::cout << "Processing pattern:" << pattern.tostring(*classDecoder) << " smallerPattern:" << smallerPattern.tostring(*classDecoder) << " p:" << p.tostring(*classDecoder) << " pfi:" << patternFromIndex.tostring(*classDecoder) << std::endl;
-                
-
-                int frequency = patternModel->occurrencecount(pattern);
-                marginalCount += frequency;
-                
-                switch (frequency)
-                {
-                    case 0:
-                        break;
-                    case 1:
-                        N1 += 1;//frequency;
-                        break;
-                    case 2:
-                        N2 += 1;//frequency;
-                        break;
-                    default:
-                        N3plus += 1;//frequency;
-                        break;
-                }
-                //if(p == pattern) { 
-                if(p == smallerPattern) std::cout << "freq:" << frequency << " N1:" << N1 << " N2:" << N2 << " N3+:" << N3plus << " M:" << marginalCount << std::endl; 
-                //}
-            }
-        }
-    }
-}
 
 
 
@@ -409,7 +405,7 @@ double KneserNey::pkn(const Pattern& pattern, bool debug)
         std::cout << "[" << n << "] Main pkn: " << pattern.tostring(*classDecoder) << std::endl;
     }
 
-    return pkn(Pattern(pattern, order, 1), Pattern(pattern, 0, order), debug);
+    return pkn(pattern, Pattern(pattern, order, 1), Pattern(pattern, 0, order), debug);
 }
 
 bool KneserNey::isOOVWord(const Pattern& word)

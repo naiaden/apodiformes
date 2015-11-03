@@ -52,14 +52,14 @@ public:
         void precomputeContextValues();
         void recursivePrecomputeContextValues();
 
-        double gamma(const Pattern& pattern, bool lowerOrder, bool debug = false);
+        double gamma(const Pattern& pattern, bool debug = false);
        
         bool isOOV(const Pattern& pattern);
         bool isOOVWord(const Pattern& word);
 
         double D(int c);
 
-        double pkn(const Pattern& word, const Pattern& history, bool debug = false);
+        double pkn(const Pattern& pattern, const Pattern& word, const Pattern& history, bool debug = false);
         double pkn(const Pattern& pattern, bool debug = false);
         
 protected:
@@ -79,12 +79,6 @@ private:
 
         const int MAXLEVEL=4;
 
-	/**
-	 * This is a congregated function that determines N_1, N_2, and N_3+ for
-	 * the pattern at one go. N_x is the number of n-grams of which the last
-	 * word is a wildcard, and occur exactly x times.
-	 */
-	double N(const Pattern& pattern, int& N1, int& N2, int& N3, int& marginalCount, const Pattern& p);
 
 };
 

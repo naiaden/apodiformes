@@ -13,7 +13,7 @@
 #include <classdecoder.h>
 
 #include <fstream>
-
+#include <glog/logging.h> 
 
 /**
  * EVERYTHING IN LOG SPACE
@@ -49,8 +49,8 @@ public:
 
 	void computeFrequencyStats();
         void recursiveComputeFrequencyStats();
-        void computeAllN();
-        void recursiveComputeAllN();
+        void computeAllN(const Pattern& p);
+        void recursiveComputeAllN(const Pattern& p);
         void iterativeComputeAllN();
 
         double gamma(const Pattern& pattern, bool debug = false);
@@ -81,7 +81,7 @@ private:
 	 * the pattern at one go. N_x is the number of n-grams of which the last
 	 * word is a wildcard, and occur exactly x times.
 	 */
-	double N(const Pattern& pattern, int& N1, int& N2, int& N3, int& marginalCount);
+	double N(const Pattern& pattern, int& N1, int& N2, int& N3, int& marginalCount, const Pattern& p);
 
 };
 
@@ -158,7 +158,7 @@ struct KneserNeyFactory
         std::getline(is, line); std::istringstream iss(line);
         iss >> holder >> msize;}
 
-        std::cout << "order:" << order << "alg:" << algorithm << "ns:" << n1 << ";" << n2 << ";" << n3 << ";" << n4 << "Ds:" << Y << ";" << D1 << ";" << D2 << ";" << D3plus << "toks:" << tokens << "m:" << msize << std::endl;
+        LOG(INFO) << "order:" << order << "alg:" << algorithm << "ns:" << n1 << ";" << n2 << ";" << n3 << ";" << n4 << "Ds:" << Y << ";" << D1 << ";" << D2 << ";" << D3plus << "toks:" << tokens << "m:" << msize;
 
         std::unordered_map<Pattern, std::tuple<int, int, int, int> >* m = new std::unordered_map<Pattern, std::tuple<int, int, int, int> >();;
         for(int i = 0; i < msize; ++i)

@@ -32,9 +32,10 @@
 #include <sstream>
 #include <iomanip>
 
-double perplexity(double sum, int instances)
+double perplexity(double sum, int instances, int numberOfOOV)
 {
-	double dInstances = (double) instances;
+        std::cout << "S:" << sum << " #:" << instances << " O:" << numberOfOOV << std::endl;
+	double dInstances = (double) (instances-numberOfOOV);
 	return exp(-1.0*sum+dInstances*log(dInstances));
 }
 
@@ -51,6 +52,7 @@ int main(int argc, char** argv)
 {
 
         google::InitGoogleLogging(argv[0]);
+        bool debug = true;
 
 	std::cout << "STRAK" << std::endl;
 
@@ -129,7 +131,7 @@ int main(int argc, char** argv)
 
             LOG(INFO) << "+ Computing frequency stats for KN";
             kneserNeyPtr->recursiveComputeFrequencyStats();
-            kneserNeyPtr->recursiveComputeAllN();
+            kneserNeyPtr->recursiveComputeAllN(collectionClassEncoderPtr->buildpattern(". '"));
             LOG(INFO) << "- Computing frequency stats for KN";
 
 
@@ -145,23 +147,6 @@ int main(int argc, char** argv)
             kneserNeyPtr = KneserNeyFactory::readFromFile("alice-kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
         }
 
-    //    kneserNeyPtr->doSomething();
-
-//        Pattern intoA = collectionClassEncoderPtr->buildpattern("' cried the");
-//        std::cout << "Created pattern: " << intoA.tostring(*collectionClassDecoderPtr) << std::endl;
-//        double pknSum = 0.0;
-//        for(const auto& iter: *collectionIndexedModelPtr)
-//        {
-//            if(iter.first.size() == 1)
-//            {
-//                Pattern newP = intoA + iter.first;
-//                double pkn = kneserNeyPtr->pkn(newP, true);
-//                pknSum += pkn;
-//                std::cout << pkn << "\t" << newP.tostring(*collectionClassDecoderPtr) << std::endl;
-//            }
-//        }
-//        std::cout << "SUM: " << pknSum <<std::endl;
-
         LOG(INFO) << "Processing testing files";
         std::vector<TestFile> testInputFiles = std::vector<TestFile>();
 	testInputFiles.push_back(TestFile("test1", "tok", inputDirectory));
@@ -176,12 +161,6 @@ int main(int argc, char** argv)
         }
         collectionClassEncoderPtr->save("TESTING.cls");
         collectionClassDecoderPtr->load("TESTING.cls");
-
-//        PatternSet<uint64_t> allPatterns;
-//        {
-//            PatternModel<uint32_t> _train_pattern_model(collectionPatternFile.getPath(), options);
-//            allPatterns = _train_pattern_model.extractset();
-//        }
 
         for(const auto& testFile: testInputFiles)
         {
@@ -209,10 +188,16 @@ int main(int argc, char** argv)
                         Pattern context  = collectionClassEncoderPtr->buildpattern(contextStream.str());
                         Pattern focus = collectionClassEncoderPtr->buildpattern(words[i]);
 
-                        double prob = kneserNeyPtr->pkn(context+focus, true);
+                        double prob = kneserNeyPtr->pkn(context+focus,debug);
 
+                        ++numberOfTestPatterns;
                         if(kneserNeyPtr->isOOVWord(focus))
-                        std::cout << "*** ";
+                        {
+                            std::cout << "*** ";
+                            ++numberOfOOV;
+                            prob = 0.0;
+                        }
+                        totalProbs += prob;
                         std::cout << "p(" << focus.tostring(*collectionClassDecoderPtr) << "|";
                         std::cout << context.tostring(*collectionClassDecoderPtr) << "): ";
                         std::cout << prob << std::endl;
@@ -221,7 +206,7 @@ int main(int argc, char** argv)
             }
         }
 
-	std::cout << "Perplexity is " << perplexity(totalProbs, double(numberOfTestPatterns)) << std::endl;
+	std::cout << "Perplexity is " << perplexity(totalProbs, numberOfTestPatterns,numberOfOOV) << std::endl;
         
 /*
 

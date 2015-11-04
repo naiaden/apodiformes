@@ -96,21 +96,28 @@ double KneserNey::pkn(const Pattern& pattern, const Pattern& word, const Pattern
         std::cout << "[" << n << "] N1p(o" << XY.tostring(*classDecoder) << "o):" << N1p_oXYo << " prob:" << prob << " interpolation:" << interpolation << " backoff:" << backoff << std::endl;
         return prob+interpolation*backoff;
     }
-
-    return 0.0;
 }
 
 double KneserNey::gamma(const Pattern& history, bool debug)
 {
     std::tuple<int, int, int> values = (*contextValues)[history];
     double p1 = D1 * std::get<0>(values) + D2 * std::get<1>(values) + D3plus * std::get<2>(values);
+    std::cout << "[" << n << "]\ty(" << history.tostring(*classDecoder) << ") = " << D1 << "*" << std::get<0>(values) << " + " << D2 << "*" << std::get<1>(values) << " + " << D3plus << "*" << std::get<2>(values) << " = " << p1 << std::endl;
+
 
     if(n == MAXLEVEL)
     {
+        std::cout << "[" << n << "]\t\t/" << patternModel->occurrencecount(history) << " = " << std::max(0.0, p1/patternModel->occurrencecount(history)) << std::endl;
         return std::max(0.0, p1/patternModel->occurrencecount(history));
     } else
     {
-        return 0.0; //dit klopt niet. Check wat het wel moet zijn.
+        Pattern XY = history;
+        int N1p_oXYo = 0;
+        const auto& XYiter = contextValues_n1p_oXYo->find(XY);
+        if(XYiter != contextValues_n1p_oXYo->end()) N1p_oXYo = XYiter->second;
+
+        std::cout << "[" << n << "]\t\t/" << N1p_oXYo << " = " << p1/N1p_oXYo << std::endl;
+        return std::max(0.0, p1/N1p_oXYo);
     }
 }   
 

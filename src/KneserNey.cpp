@@ -71,9 +71,18 @@ double KneserNey::pkn(const Pattern& pattern, const Pattern& word, const Pattern
         const auto& Iter = contextValues_n1p_oXYo->find(Pattern());
         if(Iter != contextValues_n1p_oXYo->end()) N1p_oo = Iter->second;
 
+        double interpolation = gamma(Pattern());
+
+
+        double backoff = 1.0/patternModel->totalwordtypesingroup(0, 1);
+        std::cout << "[" << n-1 << "] backoff = 1/" << patternModel->totalwordtypesingroup(0,1) << " = " << backoff << std::endl;
+
+
         std::cout << "[" << n << "] N1p(o" << Z.tostring(*classDecoder) << "):" << N1p_oZ << " N1p(oo):" << N1p_oo << std::endl;
 
-        return std::max(0.0, (N1p_oZ - D(patternModel->occurrencecount(word)))/N1p_oo);
+
+
+        return std::max(0.0, (N1p_oZ - D(patternModel->occurrencecount(word)))/N1p_oo) + interpolation*backoff;
     } else
     {
         int count_XYZ = patternModel->occurrencecount(pattern);
@@ -167,10 +176,41 @@ void KneserNey::precomputeContextValues()
     {
         int N1p_oZ = 0;
         int N1p_oo = 0;
+        int N1_o = 0;
+        int N2_o = 0;
+        int N3p_o = 0;
 
         for(const auto& iter: *patternModel)
         {
-            if(iter.first.size() == 2)
+            if(iter.first.size() == 1)
+            {
+                Pattern Z = iter.first;
+                
+                const auto& ZIter = contextValues->find(Pattern());
+                if(ZIter == contextValues->end())
+                {
+                    N1_o = 0;
+                    N2_o = 0;
+                    N3p_o = 0;
+                } else
+                {
+                    std::tuple<int, int, int> values = ZIter->second;
+                    N1_o = std::get<0>(values);
+                    N2_o = std::get<1>(values);
+                    N3p_o = std::get<2>(values);
+                }
+
+                switch(patternModel->occurrencecount(Z))
+                {
+                    case 0: break;
+                    case 1: ++N1_o; break;
+                    case 2: ++N2_o; break;
+                    default: ++N3p_o; break;
+                }
+
+                (*contextValues)[Pattern()] = std::tuple<int, int, int>(N1_o, N2_o, N3p_o);
+                
+            } else if(iter.first.size() == 2)
             {
                 Pattern YZ = iter.first;
                 Pattern Z = Pattern(YZ, 1, 1);

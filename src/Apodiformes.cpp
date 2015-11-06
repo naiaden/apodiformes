@@ -36,7 +36,7 @@ double perplexity(double sum, int instances, int numberOfOOV)
 {
         std::cout << "S:" << sum << " #:" << instances << " O:" << numberOfOOV << std::endl;
 	double dInstances = (double) (instances-numberOfOOV);
-	return exp(-1.0*sum+dInstances*log(dInstances));
+        return pow(10, -1.0/dInstances * sum); // 10^(−1÷4×−5.80288)
 }
 
 std::vector<std::string> split(std::string const &input) { 
@@ -149,11 +149,11 @@ int main(int argc, char** argv)
 
 //        LOG(INFO) << "Processing testing files";
         std::vector<TestFile> testInputFiles = std::vector<TestFile>();
-	testInputFiles.push_back(TestFile("test1", "tok", inputDirectory));
+	testInputFiles.push_back(TestFile("test", "tok", inputDirectory));
 
         int numberOfTestPatterns = 0;
         int numberOfOOV = 0;
-        double totalProbs = 0.0;
+        double totalLogProb = 0.0;
 
         for(const auto& testFile: testInputFiles)
         {
@@ -191,23 +191,25 @@ int main(int argc, char** argv)
                         double prob = kneserNeyPtr->pkn(context+focus, focus, context,debug);
 
                         ++numberOfTestPatterns;
+                        double logProb = log10(prob);
                         if(kneserNeyPtr->isOOVWord(focus))
                         {
                             std::cout << "*** ";
                             ++numberOfOOV;
                             prob = 0.0;
+                            logProb = 0.0;
                         }
-                        totalProbs += prob;
+                        totalLogProb += logProb;
                         std::cout << "p(" << focus.tostring(*collectionClassDecoderPtr) << "|";
                         std::cout << context.tostring(*collectionClassDecoderPtr) << "): ";
-                        std::cout << prob << std::endl;
+                        std::cout << prob << " [" << logProb << "]" << std::endl;
                     }
                 }
             }
         }
-//
-//	std::cout << "Perplexity is " << perplexity(totalProbs, numberOfTestPatterns,numberOfOOV) << std::endl;
-//        
+
+	std::cout << "Perplexity is " << perplexity(totalLogProb, numberOfTestPatterns,numberOfOOV) << std::endl;
+        
 /*
 
 

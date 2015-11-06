@@ -53,6 +53,7 @@ public:
         void recursivePrecomputeContextValues();
 
         double gamma(const Pattern& pattern, bool debug = false);
+        double pknFromLevel(int level, const Pattern& pattern, const Pattern& word, const Pattern& history, bool debug = false);
        
         bool isOOV(const Pattern& pattern);
         bool isOOVWord(const Pattern& word);

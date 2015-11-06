@@ -52,7 +52,7 @@ int main(int argc, char** argv)
 {
 
         google::InitGoogleLogging(argv[0]);
-        bool debug = true;
+        bool debug = false;
 
 	std::cout << "STRAK" << std::endl;
 
@@ -149,7 +149,7 @@ int main(int argc, char** argv)
 
 //        LOG(INFO) << "Processing testing files";
         std::vector<TestFile> testInputFiles = std::vector<TestFile>();
-	testInputFiles.push_back(TestFile("test", "tok", inputDirectory));
+	testInputFiles.push_back(TestFile("test1", "tok", inputDirectory));
 
         int numberOfTestPatterns = 0;
         int numberOfOOV = 0;
@@ -176,20 +176,50 @@ int main(int argc, char** argv)
                     //
                 } else
                 {
-                    for(int i = (options.MAXLENGTH-1); i < words.size(); ++i)
+                    //for(int i = 0; i < options.MAXLENGTH; ++i)
+                    //{
+                    //    std::stringstream contextStream;
+                    //    contextStream << words[i];
+                    //    for(int ii=1; ii < i-1; ++ii)
+                    //    {
+                    //        contextStream << " " << words[+ii];
+                    //    }
+                    //    Pattern context = collectionClassEncoderPtr->buildpattern(contextStream.str());
+                    //    Pattern focus = collectionClassEncoderPtr->buildpattern(words[i]);
+
+                    //}
+
+                    for(int i = 0/*(options.MAXLENGTH-1)*/; i < words.size(); ++i)
                     {
-                        std::stringstream contextStream;
-                        contextStream << words[i-(options.MAXLENGTH-1)];
-                        for(int ii= 1; ii < (options.MAXLENGTH-1); ++ii)
+                        Pattern context;
+                        Pattern focus;
+                        double prob;
+
+                        if(i < options.MAXLENGTH-1)
                         {
-                            contextStream << " " << words[i-(options.MAXLENGTH-1)+ii];
+                            std::stringstream contextStream;
+                            for(int ii = 0; ii < i; ++ii)
+                            {
+                                contextStream << " " << words[ii];
+                            }
+                            context = collectionClassEncoderPtr->buildpattern(contextStream.str());
+                            focus = collectionClassEncoderPtr->buildpattern(words[i]);
+                            std::cout << "!!! p(" << focus.tostring(*collectionClassDecoderPtr) << "|" << context.tostring(*collectionClassDecoderPtr) << ")" << std::endl;
+                            continue;
+                        } else
+                        {
+                            std::stringstream contextStream;
+                            contextStream << words[i-(options.MAXLENGTH-1)];
+                            for(int ii= 1; ii < (options.MAXLENGTH-1); ++ii)
+                            {
+                                contextStream << " " << words[i-(options.MAXLENGTH-1)+ii];
+                            }
+
+                            context  = collectionClassEncoderPtr->buildpattern(contextStream.str());
+                            focus = collectionClassEncoderPtr->buildpattern(words[i]);
+
+                            prob = kneserNeyPtr->pkn(context+focus, focus, context,debug);
                         }
-
-                        Pattern context  = collectionClassEncoderPtr->buildpattern(contextStream.str());
-                        Pattern focus = collectionClassEncoderPtr->buildpattern(words[i]);
-
-                        double prob = kneserNeyPtr->pkn(context+focus, focus, context,debug);
-
                         ++numberOfTestPatterns;
                         double logProb = log10(prob);
                         if(kneserNeyPtr->isOOVWord(focus))
@@ -209,74 +239,6 @@ int main(int argc, char** argv)
         }
 
 	std::cout << "Perplexity is " << perplexity(totalLogProb, numberOfTestPatterns,numberOfOOV) << std::endl;
-        
-/*
-
-
-//	double corpusProbability = 0;
-//	int numberOfTestPatterns = 0;
-//
-//	docCntr = 0;
-//	BOOST_FOREACH( TestFile tf, testInputFiles )
-//	{
-//
-//		std::cout << indent(indentation++) << "+ " << tf.getPath() << std::endl;
-//		std::cout << indent(indentation) << "+ Encoding document" << std::endl;
-//		Document document = Document(docCntr++, tf.getPath(), collectionClassDecoderPtr);
-//
-//		ColibriFile documentCorpusFile = ColibriFile(tf.getFileName(false), "colibri.cls", generatedDirectory, ColibriFile::Type::CORPUS); //documentClassFile
-//		ColibriFile documentEncodedFile = ColibriFile(tf.getFileName(true), "colibri.dat", generatedDirectory, ColibriFile::Type::ENCODED);//inputFileName
-//		ColibriFile documentPatternFile = ColibriFile(tf.getFileName(false), "colibri.pattern", generatedDirectory, ColibriFile::Type::PATTERNMODEL);
-//
-//		const std::string command = colibriEncoder + " -U" + " -d " + generatedDirectory + " -o " + documentCorpusFile.getFileName(false) + " -c " + collectionCorpusFile.getPath() + " " + tf.getPath();
-//		std::cout << indent(indentation) << "Executing command: " << command << std::endl;
-//		system( command.c_str() );
-//		std::cout << indent(indentation) << "- Encoding done" << std::endl;
-//
-//		std::cout << indent(indentation) << "+ Testing on file: " << documentEncodedFile.getPath() << std::endl;
-//		IndexedPatternModel<> documentModel;
-//		documentModel.train(documentEncodedFile.getPath(), options);
-//		std::cout << indent(indentation) << "- Testing on file" << std::endl;
-//
-//		std::cout << indent(indentation) << "Iterating over all patterns" << std::endl;
-//		double documentProbability = 0.0;
-//		int numberPatternsInDocument = 0;
-//                for(const auto& iter: documentModel)
-//		{
-//			const Pattern pattern = iter.first;
-//
-//                        if(trainLanguageModel.isOOV(pattern))
-//                        {
-//                            std::cout << indent(indentation+1) << "***" << pattern.tostring(*collectionClassDecoderPtr) << std::endl;
-//                        } else
-//                        {
-//                            ++numberOfTestPatterns;
-//                            ++numberPatternsInDocument;
-//                            //double patternProbability = log(trainLanguageModel.getSmoothedValue(pattern, indentation+1));
-//                            double patternProbability = trainLanguageModel.pkn(pattern);
-//                            std::cout << "pkn: " << patternProbability << std::endl;
-//
-//                            documentProbability += patternProbability;
-//                            corpusProbability += documentProbability;
-//                            std::cout << indent(indentation+1) << "log probability: " << patternProbability << " Perplexity: " << perplexity(patternProbability, 1) << " document perplexity(" << perplexity(documentProbability,numberPatternsInDocument) << ")" << std::endl;
-//                        }
-//		}
-//
-//		std::cout  << "Document perplexity: " << perplexity(documentProbability,numberPatternsInDocument) << std::endl;
-//
-//		std::cout << indent(--indentation) << "- " << tf.getPath() << std::endl;
-//	}
-//	std::cout << indent(--indentation) << "- Processing testing files" << std::endl;
-//
-//
-//
-//
-
-
-
-*/
-
-
 	std::cout << "ALS EEN REIGER" << std::endl;
 }
 

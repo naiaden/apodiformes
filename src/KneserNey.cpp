@@ -53,9 +53,12 @@ double KneserNey::pkn(const Pattern& pattern, const Pattern& word, const Pattern
     if(n == MAXLEVEL)
     {
         int count_WXYZ = patternModel->occurrencecount(pattern);
-        double prob = std::max(0.0, (count_WXYZ-D(count_WXYZ))/patternModel->occurrencecount(history));
+        int count_WXY = patternModel->occurrencecount(history);
+        double prob = std::max(0.0, (1.0*count_WXYZ-D(count_WXYZ))/count_WXY);
         Pattern XY = Pattern(history, 1, n-1);
+
         double interpolation = gamma(history);
+        if(count_WXY == 0) interpolation = 1.0; // as per personal communication with Stan Chen 
         double backoff = bra->pkn(XY+word, word, XY, debug); 
         std::cout << "[" << n << "] Count(" << pattern.tostring(*classDecoder) << "):" << count_WXYZ << " prob:" << prob << " interpolation:" << interpolation << " backoff:" << backoff << std::endl;
         return prob+interpolation*backoff;
@@ -82,7 +85,7 @@ double KneserNey::pkn(const Pattern& pattern, const Pattern& word, const Pattern
 
 
 
-        return std::max(0.0, (N1p_oZ - D(patternModel->occurrencecount(word)))/N1p_oo) + interpolation*backoff;
+        return std::max(0.0, (1.0*N1p_oZ - D(patternModel->occurrencecount(word)))/N1p_oo) + interpolation*backoff;
     } else
     {
         int count_XYZ = patternModel->occurrencecount(pattern);
@@ -98,7 +101,7 @@ double KneserNey::pkn(const Pattern& pattern, const Pattern& word, const Pattern
         if(XYZiter != contextValues_n1p_oXYZ->end()) N1p_oXYZ = XYZiter->second;
         
         
-        double prob = std::max(0.0, N1p_oXYZ-D(count_XYZ)/N1p_oXYo);
+        double prob = std::max(0.0, (1.0*N1p_oXYZ-D(count_XYZ))/N1p_oXYo);
         double interpolation = gamma(history);
         Pattern Y = Pattern(history, 1, n-1);
         double backoff = bra->pkn(Y+word, word, Y, debug);

@@ -47,6 +47,13 @@ KneserNey::KneserNey(int order, IndexedPatternModel<>* patternModel, ClassDecode
 
 }
 
+double KneserNey::pknFromLevel(int level, const Pattern& pattern, const Pattern& word, const Pattern& history, bool debug)
+{
+    if(level == n)
+        return pkn(pattern, word, history, debug);
+    else
+        return bra->pknFromLevel(level, pattern, word, history, debug);
+}
 
 double KneserNey::pkn(const Pattern& pattern, const Pattern& word, const Pattern& history, bool debug)
 {

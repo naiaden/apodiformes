@@ -56,9 +56,9 @@ int main(int argc, char** argv)
 
 	std::cout << "STRAK" << std::endl;
 
-	const std::string inputDirectory = "docs/";
-	const std::string generatedDirectory = "docs/generated/";
-	const std::string collectionName = "1bw";
+	const std::string inputDirectory = "/scratch/lonrust/";
+	const std::string generatedDirectory = "/scratch/lonrust/generated/";
+	const std::string collectionName = "apodiformes-1bw";
 	const std::string colibriEncoder = "~/Software/colibri-core/src/colibri-classencode";
 
         LOG(INFO) << "Input directory: " << inputDirectory;
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
         if(freshtrain)
         {
 	    std::vector<TrainFile> trainInputFiles = std::vector<TrainFile>();
-            trainInputFiles.push_back(TrainFile("1bw-train", "tok", inputDirectory));
+            trainInputFiles.push_back(TrainFile("train-1bw", "txt", inputDirectory));
 
             std::string allFileNames;
             BOOST_FOREACH( TrainFile f, trainInputFiles) // generate a list of all file names
@@ -149,7 +149,7 @@ int main(int argc, char** argv)
 
 //        LOG(INFO) << "Processing testing files";
         std::vector<TestFile> testInputFiles = std::vector<TestFile>();
-	testInputFiles.push_back(TestFile("1bw-test", "tok", inputDirectory));
+	testInputFiles.push_back(TestFile("test-1bw", "txt", inputDirectory));
 
         int numberOfTestPatterns = 0;
         int numberOfOOV = 0;

@@ -56,9 +56,9 @@ int main(int argc, char** argv)
 
 	std::cout << "STRAK" << std::endl;
 
-	const std::string inputDirectory = "/scratch/lonrust/";
-	const std::string generatedDirectory = "/scratch/lonrust/generated/";
-	const std::string collectionName = "apodiformes-1bw";
+	const std::string inputDirectory = "/scratch/lonrust/apodiformes/input/";
+	const std::string generatedDirectory = "/scratch/lonrust/apodiformes/generated/";
+	const std::string collectionName = "apodiformes-aiw";
 	const std::string colibriEncoder = "~/Software/colibri-core/src/colibri-classencode";
 
         LOG(INFO) << "Input directory: " << inputDirectory;
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
         if(freshtrain)
         {
 	    std::vector<TrainFile> trainInputFiles = std::vector<TrainFile>();
-            trainInputFiles.push_back(TrainFile("train-1bw", "txt", inputDirectory));
+            trainInputFiles.push_back(TrainFile("aiw", "train", inputDirectory));
 
             std::string allFileNames;
             BOOST_FOREACH( TrainFile f, trainInputFiles) // generate a list of all file names
@@ -149,7 +149,7 @@ int main(int argc, char** argv)
 
 //        LOG(INFO) << "Processing testing files";
         std::vector<TestFile> testInputFiles = std::vector<TestFile>();
-	testInputFiles.push_back(TestFile("test-1bw", "txt", inputDirectory));
+	testInputFiles.push_back(TestFile("aiw", "test", inputDirectory));
 
         int numberOfTestPatterns = 0;
         int numberOfOOV = 0;
@@ -157,7 +157,8 @@ int main(int argc, char** argv)
 
         for(const auto& testFile: testInputFiles)
         {
-            collectionClassEncoderPtr->encodefile(testFile.getPath(), "TESTING.dat", 1, 1, 0, 1);
+            // bool allowunknown, bool autoaddunknown=false, bool append=false, bool quiet=false);
+            collectionClassEncoderPtr->encodefile(testFile.getPath(), "TESTING.dat", 1, 0, 0, 1);
         }
         collectionClassEncoderPtr->save("TESTING.cls");
         collectionClassDecoderPtr->load("TESTING.cls");
@@ -176,7 +177,7 @@ int main(int argc, char** argv)
                     //
                 } else
                 {
-for(int i = 0/*(options.MAXLENGTH-1)*/; i < words.size(); ++i)
+for(int i = 1/*(options.MAXLENGTH-1)*/; i < words.size(); ++i)
      {
          Pattern context;
          Pattern focus;
@@ -184,27 +185,36 @@ for(int i = 0/*(options.MAXLENGTH-1)*/; i < words.size(); ++i)
 
          if(i < options.MAXLENGTH-1)
          {
+             if(debug) std::cout << "%%%%%%%%%%\n%%%    %%%\n%%%%%%%%%%" << std::endl;
              std::stringstream contextStream;
-             for(int ii = 0; ii < i; ++ii)
+             if(debug) std::cout << "Adding BOS" << std::endl;
+             contextStream << "<s> ";
+             for(int ii = 1; ii < i; ++ii)
              {
                  contextStream << " " << words[ii];
              }   
              context = collectionClassEncoderPtr->buildpattern(contextStream.str());
              focus = collectionClassEncoderPtr->buildpattern(words[i]);
-             //std::cout << "!!! [" << i << "] p(" << focus.tostring(*collectionClassDecoderPtr) << "|" << context.tostring(*collectionClassDecoderPtr) << ")" << std::endl;
-             
-             //prob = kneserNeyPtr->pkn(context+focus, focus, context,i+1, debug);
              prob = kneserNeyPtr->pknFromLevel(context.size()+1, context+focus, focus, context,debug);
          } else                
          {
+                if(debug) std::cout << std::endl;
+
                 std::stringstream contextStream;
+                if(debug) std::cout << " STRING: ";
+
+                // bool allowunknown=false, bool autoaddunknown = false
+                if(debug) std::cout << words[i-(options.MAXLENGTH-1)] << " [" << collectionClassEncoderPtr->buildpattern(words[i-(options.MAXLENGTH-1)], 1, 0).tostring(*collectionClassDecoderPtr) << "] ";
                 contextStream << words[i-(options.MAXLENGTH-1)];
                 for(int ii= 1; ii < (options.MAXLENGTH-1); ++ii)
                 {
+                     if(debug) std::cout << words[i-(options.MAXLENGTH-1)+ii] << " [" << collectionClassEncoderPtr->buildpattern(words[i-(options.MAXLENGTH-1)+ii], 1, 0).tostring(*collectionClassDecoderPtr) << "] ";
                      contextStream << " " << words[i-(options.MAXLENGTH-1)+ii];
                 }
 
-                context  = collectionClassEncoderPtr->buildpattern(contextStream.str());
+                if(debug) std::cout << std::endl << contextStream.str() << " " << words[i] << std::endl;
+
+                context  = collectionClassEncoderPtr->buildpattern(contextStream.str(), 1, 0);
                 focus = collectionClassEncoderPtr->buildpattern(words[i]);
 
                 prob = kneserNeyPtr->pkn(context+focus, focus, context,debug);
@@ -212,15 +222,19 @@ for(int i = 0/*(options.MAXLENGTH-1)*/; i < words.size(); ++i)
                         }
                         ++numberOfTestPatterns;
                         double logProb = log10(prob);
+                        std::string focusString = focus.tostring(*collectionClassDecoderPtr);
                         if(kneserNeyPtr->isOOVWord(focus))
                         {
+                            focusString = words[i];
+                            
                             std::cout << "*** ";
                             ++numberOfOOV;
                             prob = 0.0;
                             logProb = 0.0;
                         }
                         totalLogProb += logProb;
-                        std::cout << "p(" << focus.tostring(*collectionClassDecoderPtr) << "|";
+                        //std::cout << "p(" << focus.tostring(*collectionClassDecoderPtr) << "|";
+                        std::cout << "p(" << focusString << "|";
                         std::cout << context.tostring(*collectionClassDecoderPtr) << "): ";
                         std::cout << prob << " [" << logProb << "]" << std::endl;
                     }

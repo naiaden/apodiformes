@@ -21,6 +21,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string/join.hpp>
 
+#include <map>
+
 #include "KneserNey.h"
 #include "File.h"
 
@@ -31,6 +33,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <stdlib.h>
 
 double perplexity(double sum, int instances, int numberOfOOV)
 {
@@ -46,41 +49,162 @@ std::vector<std::string> split(std::string const &input) {
     return ret;
 }
 
-bool freshtrain = true;
+class CommandLineOptions
+{
+    private:
+    std::string applicationName = "Apodiformes";
+
+    std::string corpusFile = "";
+    std::string vocabularyFile = "";
+    std::string patternModelFile = "";
+
+    std::string inputDirectory = "/scratch/lonrust/apodiformes/input/";
+    std::string outputDirectory = "/scratch/lonrust/apodiformes/generated/";
+    std::string collectionName = "";
+    std::string pathToColibri = "~/Software/colibri-core/src/colibri-classencode";
+
+    bool reverseIndex = true;
+    bool doSkipgrams = false;
+    int minTokens = 1;
+    int maxLength = 4;
+
+    bool debug = false;
+    bool overwriteFiles = false;
+    bool freshRun = true;
+   
+    std::vector<std::string> inputFiles;
+
+    public:
+    std::string getCorpusFile() { return corpusFile; }
+    std::string getVocabularyFile() { return vocabularyFile; }
+    std::string getPatternModelFile() { return patternModelFile; }
+
+    std::string getInputDirectory() { return inputDirectory; }
+    std::string getOutputDirectory() { return outputDirectory; }
+    std::string getCollectionName() { return collectionName; }
+    std::string getPathToColibri() { return pathToColibri; }
+
+    bool getReverseIndex() { return reverseIndex; }
+    bool getDoSkipgrams() { return doSkipgrams; }
+    int getMinTokens() { return minTokens; }
+    int getMaxLength() { return maxLength; }
+
+    bool getDebug() { return debug; }
+    bool getOverwriteFiles() { return overwriteFiles; }
+    bool getFreshRun() { return freshRun; }
+
+    std::vector<std::string> getInputFiles() { return inputFiles; }
+
+    PatternModelOptions getPatternModelOptions()
+    {
+        PatternModelOptions options;
+        options.DOREVERSEINDEX = getReverseIndex();
+        options.DOSKIPGRAMS = getDoSkipgrams();
+        options.MINTOKENS = getMinTokens();
+        options.MAXLENGTH = getMaxLength();
+        options.QUIET = true;
+
+        return options;
+    }
+
+    void printHelp()
+    {
+        std::cout << 
+        "APODIFORMES\n"
+        "-c, --corpus         colibri corpus file\n"
+        "-v, --vocabulary     colibri class file\n"
+        "-p, --patternmodel   colibri pattern model file\n"
+        "-I, --inputdir       input directory for text files\n"
+        "-O, --outputdir      output directory for generated files\n"
+        "-m, --model          output model name\n"
+        "-C, --pathtocolibri  path to colibri classencoder\n"
+        "--reverseindex       use reverse index (idk why you would want this)\n"
+        "-S, --skipgrams      use skipgrams\n"
+        "-t, --mintokens      threshold on the unigrams\n"
+        "-o, --order          order of the n-gram\n"
+        "-f, --fresh          go for a fresh run\n"
+        "-h, -?, --help       print this ugly shit and exit\n" << std::endl;
+    }
+
+    CommandLineOptions(int argc, char** argv)
+    {
+        for(int argnr = 0; argnr < argc; ++argnr)
+        {
+            if(argnr == 0) 
+            {
+                applicationName = argv[0];
+            } else if(strcmp (argv[argnr],"-h") == 0 || strcmp (argv[argnr],"--help") == 0 || strcmp (argv[argnr],"-?") == 0)
+            {
+                printHelp();
+                exit(0);
+            } else if(strcmp (argv[argnr],"-c") == 0 || strcmp (argv[argnr],"--corpus") == 0)
+            {
+                corpusFile = std::string(argv[++argnr]);
+            } else if(strcmp (argv[argnr],"-v") == 0 || strcmp (argv[argnr],"--vocabulary") == 0)
+            {
+                vocabularyFile = std::string(argv[++argnr]);
+            } else if(strcmp (argv[argnr],"-p") == 0 || strcmp (argv[argnr],"--patternmodel") == 0)
+            {
+                patternModelFile = std::string(argv[++argnr]);
+            } else if(strcmp (argv[argnr],"-I") == 0 || strcmp (argv[argnr],"--inputdir") == 0)
+            {
+                inputDirectory = std::string(argv[++argnr]);
+            } else if(strcmp (argv[argnr],"-O") == 0 || strcmp (argv[argnr],"--outputdir") == 0)
+            {
+                outputDirectory = std::string(argv[++argnr]);
+            } else if(strcmp (argv[argnr],"-m") == 0 || strcmp (argv[argnr],"--model") == 0)
+            {
+                collectionName = std::string(argv[++argnr]);
+            } else if(strcmp (argv[argnr],"-C") == 0 || strcmp (argv[argnr],"--pathtocolibri") == 0)
+            {
+                pathToColibri = std::string(argv[++argnr]);
+            } else if(strcmp (argv[argnr],"--reverseindex") == 0)
+            {
+                reverseIndex = strcmp(argv[++argnr],"true") == 0 ? true : false;
+            } else if(strcmp (argv[argnr],"-S") == 0 || strcmp (argv[argnr],"--skipgrams") == 0)
+            {
+                doSkipgrams = strcmp(argv[++argnr],"true") == 0 ? true : false;
+            } else if(strcmp (argv[argnr],"-t") == 0 || strcmp (argv[argnr],"--mintokens") == 0)
+            {
+                minTokens = atoi(argv[++argnr]);
+            } else if(strcmp (argv[argnr],"-o") == 0 || strcmp (argv[argnr],"--order") == 0)
+            {
+                maxLength = atoi(argv[++argnr]);
+            } else if(strcmp (argv[argnr],"-f") == 0 || strcmp (argv[argnr],"--fresh") == 0)
+            {
+                freshRun = strcmp(argv[++argnr], "true") == 0 ? true : false;
+            } else
+            {
+                inputFiles.push_back(std::string(argv[argnr]));
+            }
+        }
+
+        if(collectionName.empty())
+        {
+            std::cerr << "Provide a collection name with -m. Run again with " << applicationName << " --help for more info" << std::endl;
+            exit(1);
+        }
+    }
+};
 
 int main(int argc, char** argv)
 {
 
         google::InitGoogleLogging(argv[0]);
-        bool debug = false;
 
 	std::cout << "STRAK" << std::endl;
 
-	const std::string inputDirectory = "/scratch/lonrust/apodiformes/input/";
-	const std::string generatedDirectory = "/scratch/lonrust/apodiformes/generated/";
-	const std::string collectionName = "apodiformes-aiw";
-	const std::string colibriEncoder = "~/Software/colibri-core/src/colibri-classencode";
+        CommandLineOptions clo(argc, argv);
+	PatternModelOptions options = clo.getPatternModelOptions();
 
-        LOG(INFO) << "Input directory: " << inputDirectory;
-        LOG(INFO) << "Output directory: " << generatedDirectory;
-        LOG(INFO) << "Collection name: " << collectionName;
-
-	PatternModelOptions options;
-	options.DOREVERSEINDEX = true;
-	options.DOSKIPGRAMS = false;
-	options.MINTOKENS = 1;
-	options.MAXLENGTH = 4;
-	options.QUIET = true;
-
-        LOG(INFO) << "Creating " << options.MINTOKENS << "-" << options.MAXLENGTH << " " << (options.DOSKIPGRAMS ? "skipgram" : "ngram") << " model";
 
 	int indentation = 0;
 
-	ColibriFile collectionCorpusFile = ColibriFile(collectionName, "colibri.cls", generatedDirectory,
+	ColibriFile collectionCorpusFile = ColibriFile(clo.getCollectionName(), "colibri.cls", clo.getOutputDirectory(),
 	        ColibriFile::Type::CORPUS);
-	ColibriFile collectionEncodedFile = ColibriFile(collectionName, "colibri.dat", generatedDirectory,
+	ColibriFile collectionEncodedFile = ColibriFile(clo.getCollectionName(), "colibri.dat", clo.getOutputDirectory(),
 	        ColibriFile::Type::ENCODED); //collectionInputFileName
-	ColibriFile collectionPatternFile = ColibriFile(collectionName, "colibri.pattern", generatedDirectory,
+	ColibriFile collectionPatternFile = ColibriFile(clo.getCollectionName(), "colibri.pattern", clo.getOutputDirectory(),
 	        ColibriFile::Type::PATTERNMODEL); //collectionOutputFileName
 
         LOG(INFO) << "Using corpus file: " << collectionCorpusFile.getPath();
@@ -93,10 +217,11 @@ int main(int argc, char** argv)
         KneserNey* kneserNeyPtr;
 
 
-        if(freshtrain)
+        if(clo.getFreshRun())
         {
 	    std::vector<TrainFile> trainInputFiles = std::vector<TrainFile>();
-            trainInputFiles.push_back(TrainFile("aiw", "train", inputDirectory));
+            // append clo.getInputFiles
+            trainInputFiles.push_back(TrainFile("aiw", "train", clo.getInputDirectory()));
 
             std::string allFileNames;
             BOOST_FOREACH( TrainFile f, trainInputFiles) // generate a list of all file names
@@ -108,11 +233,11 @@ int main(int argc, char** argv)
             LOG(INFO) <<  "+ Creating collection files";
             LOG(INFO) <<  "Class encoding collection files...";
 
-            std::string clearGeneratedFiles = std::string("/bin/rm ") + generatedDirectory + "*";
+            std::string clearGeneratedFiles = std::string("/bin/rm ") + clo.getOutputDirectory() + "*";
             LOG(INFO) << "Executing command: " << clearGeneratedFiles;
             system(clearGeneratedFiles.c_str());
 
-            std::string collectionClassEncodeCommand = colibriEncoder + " -d " + generatedDirectory + " -o "
+            std::string collectionClassEncodeCommand = clo.getPathToColibri() + " -d " + clo.getOutputDirectory() + " -o "
                 + collectionCorpusFile.getFileName(false) + " -u " + allFileNames;
             LOG(INFO) << "Executing command: " << collectionClassEncodeCommand;
             system(collectionClassEncodeCommand.c_str());
@@ -145,11 +270,14 @@ int main(int argc, char** argv)
 //
 //            LOG(INFO) << "Reading Kneser Ney model from file";
 //            kneserNeyPtr = KneserNeyFactory::readFromFile("alice-kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
+        } else // not so fresh run
+        {
+
         }
 
 //        LOG(INFO) << "Processing testing files";
         std::vector<TestFile> testInputFiles = std::vector<TestFile>();
-	testInputFiles.push_back(TestFile("aiw", "test", inputDirectory));
+	testInputFiles.push_back(TestFile("aiw", "test", clo.getInputDirectory()));
 
         int numberOfTestPatterns = 0;
         int numberOfOOV = 0;
@@ -185,9 +313,9 @@ for(int i = 1/*(options.MAXLENGTH-1)*/; i < words.size(); ++i)
 
          if(i < options.MAXLENGTH-1)
          {
-             if(debug) std::cout << "%%%%%%%%%%\n%%%    %%%\n%%%%%%%%%%" << std::endl;
+             if(clo.getDebug()) std::cout << "%%%%%%%%%%\n%%%    %%%\n%%%%%%%%%%" << std::endl;
              std::stringstream contextStream;
-             if(debug) std::cout << "Adding BOS" << std::endl;
+             if(clo.getDebug()) std::cout << "Adding BOS" << std::endl;
              contextStream << "<s> ";
              for(int ii = 1; ii < i; ++ii)
              {
@@ -195,29 +323,29 @@ for(int i = 1/*(options.MAXLENGTH-1)*/; i < words.size(); ++i)
              }   
              context = collectionClassEncoderPtr->buildpattern(contextStream.str());
              focus = collectionClassEncoderPtr->buildpattern(words[i]);
-             prob = kneserNeyPtr->pknFromLevel(context.size()+1, context+focus, focus, context,debug);
+             prob = kneserNeyPtr->pknFromLevel(context.size()+1, context+focus, focus, context,clo.getDebug());
          } else                
          {
-                if(debug) std::cout << std::endl;
+                if(clo.getDebug()) std::cout << std::endl;
 
                 std::stringstream contextStream;
-                if(debug) std::cout << " STRING: ";
+                if(clo.getDebug()) std::cout << " STRING: ";
 
                 // bool allowunknown=false, bool autoaddunknown = false
-                if(debug) std::cout << words[i-(options.MAXLENGTH-1)] << " [" << collectionClassEncoderPtr->buildpattern(words[i-(options.MAXLENGTH-1)], 1, 0).tostring(*collectionClassDecoderPtr) << "] ";
+                if(clo.getDebug()) std::cout << words[i-(options.MAXLENGTH-1)] << " [" << collectionClassEncoderPtr->buildpattern(words[i-(options.MAXLENGTH-1)], 1, 0).tostring(*collectionClassDecoderPtr) << "] ";
                 contextStream << words[i-(options.MAXLENGTH-1)];
                 for(int ii= 1; ii < (options.MAXLENGTH-1); ++ii)
                 {
-                     if(debug) std::cout << words[i-(options.MAXLENGTH-1)+ii] << " [" << collectionClassEncoderPtr->buildpattern(words[i-(options.MAXLENGTH-1)+ii], 1, 0).tostring(*collectionClassDecoderPtr) << "] ";
+                     if(clo.getDebug()) std::cout << words[i-(options.MAXLENGTH-1)+ii] << " [" << collectionClassEncoderPtr->buildpattern(words[i-(options.MAXLENGTH-1)+ii], 1, 0).tostring(*collectionClassDecoderPtr) << "] ";
                      contextStream << " " << words[i-(options.MAXLENGTH-1)+ii];
                 }
 
-                if(debug) std::cout << std::endl << contextStream.str() << " " << words[i] << std::endl;
+                if(clo.getDebug()) std::cout << std::endl << contextStream.str() << " " << words[i] << std::endl;
 
                 context  = collectionClassEncoderPtr->buildpattern(contextStream.str(), 1, 0);
                 focus = collectionClassEncoderPtr->buildpattern(words[i]);
 
-                prob = kneserNeyPtr->pkn(context+focus, focus, context,debug);
+                prob = kneserNeyPtr->pkn(context+focus, focus, context,clo.getDebug());
 
                         }
                         ++numberOfTestPatterns;

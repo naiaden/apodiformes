@@ -17,6 +17,7 @@ public:
 
 	File(const std::string& fileName, const std::string& extension, const std::string& directory = "");
 
+        bool exists();
 	std::string getFileName(bool withExtension = true) const;
 	std::string getName() const;
 	std::string getExtension() const;

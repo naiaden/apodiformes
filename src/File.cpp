@@ -6,6 +6,8 @@
  */
 
 #include "File.h"
+#include <fstream>
+//#include <experimental/filesystem>
 
 File::~File()
 {
@@ -16,6 +18,14 @@ File::File(const std::string& fileName, const std::string& extension, const std:
 		: fileName(fileName), extension(extension), directory(directory)
 {
 
+}
+
+bool File::exists()
+{
+    // only in gcc 5+, currently stuck on 4.9-something
+    //return fs::exists(getPath(true));
+    std::ifstream infile(getPath(true));
+    return infile.good();
 }
 
 std::string File::getFileName(bool withExtension) const

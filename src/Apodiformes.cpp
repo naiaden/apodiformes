@@ -49,6 +49,24 @@ std::vector<std::string> split(std::string const &input) {
     return ret;
 }
 
+    std::vector<std::string> tokenizer( const std::string& p_pcstStr, char delim )  {
+        std::vector<std::string> tokens;
+        std::stringstream   mySstream( p_pcstStr );
+        std::string         temp;
+
+        while( getline( mySstream, temp, delim ) ) {
+            tokens.push_back( temp );
+        }
+
+        return tokens;
+    }
+
+inline std::string trim(const std::string &s)
+{
+   auto  wsfront=std::find_if_not(s.begin(),s.end(),[](int c){return std::isspace(c);});
+      return std::string(wsfront,std::find_if_not(s.rbegin(),std::string::const_reverse_iterator(wsfront),[](int c){return std::isspace(c);}).base());
+}
+
 class CommandLineOptions
 {
     private:
@@ -73,6 +91,7 @@ class CommandLineOptions
     bool freshRun = true;
    
     std::vector<std::string> inputFiles;
+    std::vector<std::string> testFiles;
 
     public:
     std::string getCorpusFile() { return corpusFile; }
@@ -94,6 +113,7 @@ class CommandLineOptions
     bool getFreshRun() { return freshRun; }
 
     std::vector<std::string> getInputFiles() { return inputFiles; }
+    std::vector<std::string> getTestFiles() { return testFiles; }
 
     PatternModelOptions getPatternModelOptions()
     {
@@ -110,7 +130,9 @@ class CommandLineOptions
     void printHelp()
     {
         std::cout << 
-        "APODIFORMES\n"
+        "APODIFORMES [options] inputfiles\n"
+        "--config             read long-option '=' delimited options.\n"
+        "                     Command-line options overwrite config options.\n"
         "-c, --corpus         colibri corpus file\n"
         "-v, --vocabulary     colibri class file\n"
         "-p, --patternmodel   colibri pattern model file\n"
@@ -123,11 +145,93 @@ class CommandLineOptions
         "-t, --mintokens      threshold on the unigrams\n"
         "-o, --order          order of the n-gram\n"
         "-f, --fresh          go for a fresh run\n"
+        "-d, --debug          show debug output\n"
         "-h, -?, --help       print this ugly shit and exit\n" << std::endl;
     }
 
-    CommandLineOptions(int argc, char** argv)
+    void parseArguments(std::string fileName)
     {
+        std::ifstream config(fileName);
+        for( std::string line; getline( config, line ); )
+        {
+            std::vector<std::string> tokens = tokenizer(line, '=');
+            if(tokens.size() == 2)
+            {
+               std::string key = trim(tokens[0]);
+               std::string value = trim(tokens[1]);
+
+               if(!key.compare("corpus"))
+               {
+                    corpusFile = value;
+               } else if(!key.compare("vocabulary"))
+               {
+                    vocabularyFile = value;
+               }else if(!key.compare("patternmodel"))
+               {
+                    patternModelFile = value;
+               } else if(!key.compare("inputdir"))
+               {
+                    inputDirectory = value;
+               }else if(!key.compare("outputdir"))
+               {
+                    outputDirectory = value;
+               }else if(!key.compare("model"))
+               {
+                    collectionName = value;
+               }else if(!key.compare("pathtocolibri"))
+               {
+                    pathToColibri = value;
+               }else if(!key.compare("reverseindex"))
+               {
+                    reverseIndex = value.compare("true") ? false : true;
+               }else if(!key.compare("skipgrams"))
+               {
+                    vocabularyFile = value.compare("true") ? false : true;
+               }else if(!key.compare("mintokens"))
+               {
+                    minTokens = atoi(value.c_str());
+               }else if(!key.compare("order"))
+               {
+                    maxLength = atoi(value.c_str());
+               }else if(!key.compare("debug"))
+               {
+                    debug = value.compare("true") ? false : true;
+               }else if(!key.compare("freshrun"))
+               {
+                    freshRun = value.compare("true") ? false : true;
+               }else if(!key.compare("overwrite"))
+               {
+                    overwriteFiles = value.compare("true") ? false : true;
+               }else if(!key.compare("inputfile"))
+               {
+                    inputFiles.push_back(value);
+               }else if(!key.compare("inputfiles"))
+               {
+                    for(std::string f: tokenizer(value, ','))
+                    {
+                        inputFiles.push_back(f);
+                    }
+               }else if(!key.compare("testfile"))
+               {
+                    testFiles.push_back(value);
+               }else if(!key.compare("testfiles"))
+               {
+                    for(std::string f: tokenizer(value, ','))
+                    {
+                        testFiles.push_back(f);
+                    }
+               }
+
+            } else
+            {
+                std::cout << "Error in line: " << line << std::endl;
+            }
+        }
+    }
+
+    void parseArguments(int argc, char** argv)
+    {
+
         for(int argnr = 0; argnr < argc; ++argnr)
         {
             if(argnr == 0) 
@@ -160,24 +264,58 @@ class CommandLineOptions
                 pathToColibri = std::string(argv[++argnr]);
             } else if(strcmp (argv[argnr],"--reverseindex") == 0)
             {
-                reverseIndex = strcmp(argv[++argnr],"true") == 0 ? true : false;
+                reverseIndex = true;
             } else if(strcmp (argv[argnr],"-S") == 0 || strcmp (argv[argnr],"--skipgrams") == 0)
             {
-                doSkipgrams = strcmp(argv[++argnr],"true") == 0 ? true : false;
+                doSkipgrams = true;
             } else if(strcmp (argv[argnr],"-t") == 0 || strcmp (argv[argnr],"--mintokens") == 0)
             {
                 minTokens = atoi(argv[++argnr]);
             } else if(strcmp (argv[argnr],"-o") == 0 || strcmp (argv[argnr],"--order") == 0)
             {
                 maxLength = atoi(argv[++argnr]);
+            }  else if(strcmp (argv[argnr],"--config") == 0)
+            {
+                ++argnr;
             } else if(strcmp (argv[argnr],"-f") == 0 || strcmp (argv[argnr],"--fresh") == 0)
             {
-                freshRun = strcmp(argv[++argnr], "true") == 0 ? true : false;
+                freshRun = true;
+            } else if(strcmp (argv[argnr],"-d") == 0 || strcmp (argv[argnr],"--debug") == 0)
+            {
+                debug = true;
+            } else if(strcmp (argv[argnr],"-i") == 0 || strcmp (argv[argnr],"--inputfiles") == 0)
+            {
+                std::string list(argv[++argnr]);
+                for(std::string s: tokenizer(list, ','))
+                {
+                    inputFiles.push_back(s);
+                }
             } else
             {
                 inputFiles.push_back(std::string(argv[argnr]));
             }
         }
+    }
+
+    CommandLineOptions(int argc, char** argv)
+    {
+
+        for(int argnr = 0; argnr < argc; ++argnr)
+        {
+            if(argnr == 0) 
+            {
+                applicationName = argv[0];
+            } else if(strcmp (argv[argnr],"-h") == 0 || strcmp (argv[argnr],"--help") == 0 || strcmp (argv[argnr],"-?") == 0)
+            {
+                printHelp();
+                exit(0);
+            } else if(strcmp (argv[argnr],"--config") == 0)
+            {
+                parseArguments(std::string(argv[++argnr]));
+            }
+        }
+
+        parseArguments(argc, argv);
 
         if(collectionName.empty())
         {
@@ -189,7 +327,6 @@ class CommandLineOptions
 
 int main(int argc, char** argv)
 {
-
         google::InitGoogleLogging(argv[0]);
 
 	std::cout << "STRAK" << std::endl;
@@ -197,9 +334,7 @@ int main(int argc, char** argv)
         CommandLineOptions clo(argc, argv);
 	PatternModelOptions options = clo.getPatternModelOptions();
 
-
-	int indentation = 0;
-
+        // implement support for using these files from command line options
 	ColibriFile collectionCorpusFile = ColibriFile(clo.getCollectionName(), "colibri.cls", clo.getOutputDirectory(),
 	        ColibriFile::Type::CORPUS);
 	ColibriFile collectionEncodedFile = ColibriFile(clo.getCollectionName(), "colibri.dat", clo.getOutputDirectory(),
@@ -219,15 +354,13 @@ int main(int argc, char** argv)
 
         if(clo.getFreshRun())
         {
-	    std::vector<TrainFile> trainInputFiles = std::vector<TrainFile>();
-            // append clo.getInputFiles
-            trainInputFiles.push_back(TrainFile("aiw", "train", clo.getInputDirectory()));
+            std::cout << "Processing " << clo.getInputFiles().size() << " files" << std::endl;
 
             std::string allFileNames;
-            BOOST_FOREACH( TrainFile f, trainInputFiles) // generate a list of all file names
+            BOOST_FOREACH( auto f, clo.getInputFiles()) // generate a list of all file names
             {	
-                allFileNames += f.getPath() + " ";
-                LOG(INFO) << "Adding to be processed: " << f.getPath();
+                allFileNames += f + " ";
+                LOG(INFO) << "Adding to be processed: " << f;
             }
 
             LOG(INFO) <<  "+ Creating collection files";
@@ -276,24 +409,22 @@ int main(int argc, char** argv)
         }
 
 //        LOG(INFO) << "Processing testing files";
-        std::vector<TestFile> testInputFiles = std::vector<TestFile>();
-	testInputFiles.push_back(TestFile("aiw", "test", clo.getInputDirectory()));
 
         int numberOfTestPatterns = 0;
         int numberOfOOV = 0;
         double totalLogProb = 0.0;
 
-        for(const auto& testFile: testInputFiles)
+        for(const auto& f: clo.getTestFiles())
         {
             // bool allowunknown, bool autoaddunknown=false, bool append=false, bool quiet=false);
-            collectionClassEncoderPtr->encodefile(testFile.getPath(), "TESTING.dat", 1, 0, 0, 1);
+            collectionClassEncoderPtr->encodefile(f, "TESTING.dat", 1, 0, 0, 1);
         }
         collectionClassEncoderPtr->save("TESTING.cls");
         collectionClassDecoderPtr->load("TESTING.cls");
 
-        for(const auto& testFile: testInputFiles)
+        for(const auto& f: clo.getTestFiles())
         {
-            std::ifstream file(testFile.getPath());
+            std::ifstream file(f);
 
             std::string retrievedString;
             while(std::getline(file, retrievedString))

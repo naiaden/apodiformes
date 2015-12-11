@@ -88,7 +88,7 @@ class CommandLineOptions
 
     bool debug = false;
     bool overwriteFiles = false;
-    bool freshRun = true;
+    bool freshRun = false;
    
     std::vector<std::string> inputFiles;
     std::vector<std::string> testFiles;
@@ -268,7 +268,7 @@ class CommandLineOptions
             } else if(strcmp (argv[argnr],"-S") == 0 || strcmp (argv[argnr],"--skipgrams") == 0)
             {
                 doSkipgrams = true;
-            } else if(strcmp (argv[argnr],"-t") == 0 || strcmp (argv[argnr],"--mintokens") == 0)
+            } else if(strcmp (argv[argnr],"-T") == 0 || strcmp (argv[argnr],"--mintokens") == 0)
             {
                 minTokens = atoi(argv[++argnr]);
             } else if(strcmp (argv[argnr],"-o") == 0 || strcmp (argv[argnr],"--order") == 0)
@@ -283,6 +283,13 @@ class CommandLineOptions
             } else if(strcmp (argv[argnr],"-d") == 0 || strcmp (argv[argnr],"--debug") == 0)
             {
                 debug = true;
+            } else if(strcmp (argv[argnr],"-t") == 0 || strcmp (argv[argnr],"--testfiles") == 0)
+            {
+                std::string list(argv[++argnr]);
+                for(std::string s: tokenizer(list, ','))
+                {
+                    testFiles.push_back(s);
+                }
             } else if(strcmp (argv[argnr],"-i") == 0 || strcmp (argv[argnr],"--inputfiles") == 0)
             {
                 std::string list(argv[++argnr]);
@@ -394,7 +401,7 @@ int main(int argc, char** argv)
 
 
             LOG(INFO) << "Writing Kneser Ney model to file";
-//            KneserNeyFactory::writeToFile(*kneserNeyPtr, "alice-kneserney.out", collectionClassDecoderPtr);
+            KneserNeyFactory::writeToFile(*kneserNeyPtr, "alice-kneserney.out", collectionClassDecoderPtr);
 //        } else 
 //        {
 //            collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile.getPath());
@@ -405,6 +412,12 @@ int main(int argc, char** argv)
 //            kneserNeyPtr = KneserNeyFactory::readFromFile("alice-kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
         } else // not so fresh run
         {
+            collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile.getPath());
+            collectionClassDecoderPtr = new ClassDecoder(collectionCorpusFile.getPath());
+            collectionIndexedModelPtr = new IndexedPatternModel<>(collectionPatternFile.getPath(), options); 
+
+            LOG(INFO) << "Reading Kneser Ney model from file";
+            kneserNeyPtr = KneserNeyFactory::readFromFile("alice-kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
 
         }
 
@@ -416,7 +429,6 @@ int main(int argc, char** argv)
 
         for(const auto& f: clo.getTestFiles())
         {
-            // bool allowunknown, bool autoaddunknown=false, bool append=false, bool quiet=false);
             collectionClassEncoderPtr->encodefile(f, "TESTING.dat", 1, 0, 0, 1);
         }
         collectionClassEncoderPtr->save("TESTING.cls");
@@ -462,7 +474,6 @@ for(int i = 1/*(options.MAXLENGTH-1)*/; i < words.size(); ++i)
                 std::stringstream contextStream;
                 if(clo.getDebug()) std::cout << " STRING: ";
 
-                // bool allowunknown=false, bool autoaddunknown = false
                 if(clo.getDebug()) std::cout << words[i-(options.MAXLENGTH-1)] << " [" << collectionClassEncoderPtr->buildpattern(words[i-(options.MAXLENGTH-1)], 1, 0).tostring(*collectionClassDecoderPtr) << "] ";
                 contextStream << words[i-(options.MAXLENGTH-1)];
                 for(int ii= 1; ii < (options.MAXLENGTH-1); ++ii)

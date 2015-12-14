@@ -157,7 +157,8 @@ struct KneserNeyFactory
         std::unordered_map<Pattern, int>* contextValues_n1p_oXYo = new std::unordered_map<Pattern, int>();
         for(int i = 0; i < oxyosize; ++i)
         {
-            Pattern p(&is, false, false);
+		// Pattern(std::istream * in, bool ignoreeol, const unsigned char version, const unsigned char * corpusstart, bool debug)
+            Pattern p(&is, false, 2, false, false);
             std::getline(is, line); std::istringstream iss(line);
             int i1;
             iss >> i1;
@@ -171,7 +172,7 @@ struct KneserNeyFactory
         std::unordered_map<Pattern, int>* contextValues_n1p_oXYZ = new std::unordered_map<Pattern, int>();
         for(int i = 0; i < oxyzsize; ++i)
         {
-            Pattern p(&is, false, false);
+            Pattern p(&is, false, 2, false, false);
             std::getline(is, line); std::istringstream iss(line);
             int i1;
             iss >> i1;
@@ -179,20 +180,20 @@ struct KneserNeyFactory
         }
 
         int contextvaluessize;
-//        {std::getline(is, line); std::istringstream iss(line);
-//        iss >> holder >> contextvaluessize;}
+        {std::getline(is, line); std::istringstream iss(line);
+        iss >> holder >> contextvaluessize;}
 
         std::unordered_map<Pattern, std::tuple<int, int, int> >* contextValues = new std::unordered_map<Pattern, std::tuple<int, int, int> >();;
-//        for(int i = 0; i < contextvaluessize; ++i)
-//        {
-//            
-//            Pattern p(&is, false, false);
-////            std::cout << p.tostring(*classDecoder) << std::endl;
-//            std::getline(is, line); std::istringstream iss(line);
-//            int i1, i2, i3;
-//            iss >> i1 >> i2 >> i3;
-//            (*contextValues)[p] = std::tuple<int, int, int>(i1, i2,i3);
-//        }
+        for(int i = 0; i < contextvaluessize; ++i)
+        {
+            
+            Pattern p(&is, false, 2, false, false);
+//            std::cout << p.tostring(*classDecoder) << std::endl;
+            std::getline(is, line); std::istringstream iss(line);
+            int i1, i2, i3;
+            iss >> i1 >> i2 >> i3;
+            (*contextValues)[p] = std::tuple<int, int, int>(i1, i2,i3);
+        }
 //
 //        LOG(INFO) << "order:" << order << "alg:" << algorithm << "ns:" << n1 << ";" << n2 << ";" << n3 << ";" << n4 << "Ds:" << Y << ";" << D1 << ";" << D2 << ";" << D3plus << "toks:" << tokens << "oxyo:" << oxyosize << " oxyz: " << oxyzsize << " cv: " << contextvaluessize;
         if(order >0) 
@@ -246,27 +247,27 @@ struct KneserNeyFactory
         os << "DISCOUNTS " << kneserNey.Y << " " << kneserNey.D1 << " " << kneserNey.D2 << " " << kneserNey.D3plus << "\n";
         os << "TOKENS " << kneserNey.tokens << "\n";
         os << "CONTEXToXYo " << (kneserNey.contextValues_n1p_oXYo)->size() << "\n";
-//        for(const auto& iter: *(kneserNey.contextValues_n1p_oXYo))
-//        {
-//            std::cout << "(" << kneserNey.order << ") " << iter.first.tostring(*classDecoder) << std::endl;
-//            iter.first.write(&os);
-//            os << iter.second << "\n";
-//        }
-//        os << "CONTEXToXYZ " << (kneserNey.contextValues_n1p_oXYZ)->size() << "\n";
-//        for(const auto& iter: *(kneserNey.contextValues_n1p_oXYZ))
-//        {
-//            std::cout << "[" << kneserNey.order << "] " << iter.first.tostring(*classDecoder) << std::endl;
-//            iter.first.write(&os);
-//            os << iter.second << "\n";
-//        }
-/*        os << "CONTEXTVALUES " << kneserNey.contextValues->size() << "\n";
-        for(const auto& iter: *(kneserNey.contextValues))
+        for(const auto& iter: *(kneserNey.contextValues_n1p_oXYo))
+        {
+            std::cout << "(" << kneserNey.order << ") " << iter.first.tostring(*classDecoder) << std::endl;
+            iter.first.write(&os);
+            os << iter.second << "\n";
+        }
+        os << "CONTEXToXYZ " << (kneserNey.contextValues_n1p_oXYZ)->size() << "\n";
+        for(const auto& iter: *(kneserNey.contextValues_n1p_oXYZ))
+        {
+            std::cout << "[" << kneserNey.order << "] " << iter.first.tostring(*classDecoder) << std::endl;
+            iter.first.write(&os);
+            os << iter.second << "\n";
+        }
+        os << "CONTEXTVALUES " << kneserNey.contextValues->size() << "\n";
+       for(const auto& iter: *(kneserNey.contextValues))
         {
             iter.first.write(&os);
             std::tuple<int, int, int> iterVals = iter.second;
             os << std::get<0>(iterVals) << " " << std::get<1>(iterVals) << " " << std::get<2>(iterVals) << "\n";
         }
-*/
+
         if(kneserNey.bra)
         {
             recursiveWriteToFile(*(kneserNey.bra), os, classDecoder);

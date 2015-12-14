@@ -85,7 +85,7 @@ double KneserNey::pkn(const Pattern& pattern, const Pattern& word, const Pattern
 
 
         double backoff = 1.0/patternModel->totalwordtypesingroup(0, 1);
-        if(debug) std::cout << "[" << n-1 << "] backoff = 1/" << patternModel->totalwordtypesingroup(0,1) << " = " << backoff << std::endl;
+        if(debug) std::cout << "[" << n-1 << "] backoff = 1/" << backoff << " = " << 1.0/backoff << std::endl;
         double prob = std::max(0.0, (1.0*N1p_oZ - D(patternModel->occurrencecount(word)))/N1p_oo);
 
         if(debug) std::cout << "[" << n << "] N1p(o" << Z.tostring(*classDecoder) << "):" << N1p_oZ << " N1p(oo):" << N1p_oo << " prob:" << prob << " interpolation:" << interpolation << " backoff:" << backoff << std::endl;
@@ -120,6 +120,13 @@ double KneserNey::pkn(const Pattern& pattern, const Pattern& word, const Pattern
 
 double KneserNey::gamma(const Pattern& history, bool debug)
 {
+
+//	if(debug) std::cout << "classDecoder is " << (classDecoder ? "not " : "") << "null" << std::endl;
+//	if(debug) std::cout << "contextValues is " << (contextValues ? "not " : "") << "null" << std::endl;
+//	if(debug) std::cout << "history of length " << history.size() << ": " << history.tostring(*classDecoder) << std::endl;
+//
+//	if(debug) std::cout << "Pattern is empty: " << (history == Pattern() ? "yes" : "no") << std::endl;
+
     std::tuple<int, int, int> values = (*contextValues)[history];
     double p1 = D1 * std::get<0>(values) + D2 * std::get<1>(values) + D3plus * std::get<2>(values);
     if(debug) std::cout << "[" << n << "]\ty(" << history.tostring(*classDecoder) << ") = " << D1 << "*" << std::get<0>(values) << " + " << D2 << "*" << std::get<1>(values) << " + " << D3plus << "*" << std::get<2>(values) << " = " << p1 << std::endl;

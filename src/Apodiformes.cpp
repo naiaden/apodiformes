@@ -81,7 +81,7 @@ class CommandLineOptions
     std::string collectionName = "";
     std::string pathToColibri = "~/Software/colibri-core/src/colibri-classencode";
 
-    bool reverseIndex = true;
+    bool reverseIndex = false;
     bool doSkipgrams = false;
     int minTokens = 1;
     int maxLength = 4;
@@ -399,6 +399,8 @@ int main(int argc, char** argv)
             kneserNeyPtr->recursiveComputeFrequencyStats();
             LOG(INFO) << "- Computing frequency stats for KN";
 
+//		collectionIndexedModelPtr->computestats();
+	    collectionIndexedModelPtr->computecoveragestats(0,1);
 
             LOG(INFO) << "Writing Kneser Ney model to file";
             KneserNeyFactory::writeToFile(*kneserNeyPtr, "alice-kneserney.out", collectionClassDecoderPtr);
@@ -415,6 +417,7 @@ int main(int argc, char** argv)
             collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile.getPath());
             collectionClassDecoderPtr = new ClassDecoder(collectionCorpusFile.getPath());
             collectionIndexedModelPtr = new IndexedPatternModel<>(collectionPatternFile.getPath(), options); 
+
 
             LOG(INFO) << "Reading Kneser Ney model from file";
             kneserNeyPtr = KneserNeyFactory::readFromFile("alice-kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);

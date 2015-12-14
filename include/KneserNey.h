@@ -246,19 +246,19 @@ struct KneserNeyFactory
         os << "DISCOUNTS " << kneserNey.Y << " " << kneserNey.D1 << " " << kneserNey.D2 << " " << kneserNey.D3plus << "\n";
         os << "TOKENS " << kneserNey.tokens << "\n";
         os << "CONTEXToXYo " << (kneserNey.contextValues_n1p_oXYo)->size() << "\n";
-        for(const auto& iter: *(kneserNey.contextValues_n1p_oXYo))
-        {
-            std::cout << "(" << kneserNey.order << ") " << iter.first.tostring(*classDecoder) << std::endl;
-            iter.first.write(&os);
-            os << iter.second << "\n";
-        }
-        os << "CONTEXToXYZ " << (kneserNey.contextValues_n1p_oXYZ)->size() << "\n";
-        for(const auto& iter: *(kneserNey.contextValues_n1p_oXYZ))
-        {
-            std::cout << "[" << kneserNey.order << "] " << iter.first.tostring(*classDecoder) << std::endl;
-            iter.first.write(&os);
-            os << iter.second << "\n";
-        }
+//        for(const auto& iter: *(kneserNey.contextValues_n1p_oXYo))
+//        {
+//            std::cout << "(" << kneserNey.order << ") " << iter.first.tostring(*classDecoder) << std::endl;
+//            iter.first.write(&os);
+//            os << iter.second << "\n";
+//        }
+//        os << "CONTEXToXYZ " << (kneserNey.contextValues_n1p_oXYZ)->size() << "\n";
+//        for(const auto& iter: *(kneserNey.contextValues_n1p_oXYZ))
+//        {
+//            std::cout << "[" << kneserNey.order << "] " << iter.first.tostring(*classDecoder) << std::endl;
+//            iter.first.write(&os);
+//            os << iter.second << "\n";
+//        }
 /*        os << "CONTEXTVALUES " << kneserNey.contextValues->size() << "\n";
         for(const auto& iter: *(kneserNey.contextValues))
         {

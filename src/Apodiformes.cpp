@@ -341,17 +341,27 @@ int main(int argc, char** argv)
         CommandLineOptions clo(argc, argv);
 	PatternModelOptions options = clo.getPatternModelOptions();
 
-        // implement support for using these files from command line options
-	ColibriFile collectionCorpusFile = ColibriFile(clo.getCollectionName(), "colibri.cls", clo.getOutputDirectory(),
-	        ColibriFile::Type::CORPUS);
-	ColibriFile collectionEncodedFile = ColibriFile(clo.getCollectionName(), "colibri.dat", clo.getOutputDirectory(),
-	        ColibriFile::Type::ENCODED); //collectionInputFileName
-	ColibriFile collectionPatternFile = ColibriFile(clo.getCollectionName(), "colibri.pattern", clo.getOutputDirectory(),
-	        ColibriFile::Type::PATTERNMODEL); //collectionOutputFileName
+	std::string collectionCorpusFile = clo.getVocabularyFile();
+	if(collectionCorpusFile.empty())
+	{
+		collectionCorpusFile = clo.getOutputDirectory() + clo.getCollectionName() + ".coco.cls";
+	}
 
-        LOG(INFO) << "Using corpus file: " << collectionCorpusFile.getPath();
-        LOG(INFO) << "Using encoded file: " << collectionEncodedFile.getPath();
-        LOG(INFO) << "Using pattern file: " << collectionPatternFile.getPath();
+	std::string collectionEncodedFile = clo.getCorpusFile();
+	if(collectionEncodedFile.empty())
+	{
+		collectionEncodedFile = clo.getOutputDirectory() + clo.getCollectionName() + ".coco.dat";
+	}
+
+	std::string collectionPatternFile = clo.getCollectionName();
+	if(collectionPatternFile.empty())
+	{
+		collectionPatternFile = clo.getOutputDirectory() + clo.getCollectionName() + ".coco.model";
+	}
+
+        LOG(INFO) << "Using corpus file: " << collectionCorpusFile;
+        LOG(INFO) << "Using encoded file: " << collectionEncodedFile;
+        LOG(INFO) << "Using pattern file: " << collectionPatternFile;
 
         IndexedPatternModel<>* collectionIndexedModelPtr;
         ClassEncoder* collectionClassEncoderPtr;
@@ -373,22 +383,22 @@ int main(int argc, char** argv)
             LOG(INFO) <<  "+ Creating collection files";
             LOG(INFO) <<  "Class encoding collection files...";
 
-            std::string clearGeneratedFiles = std::string("/bin/rm ") + clo.getOutputDirectory() + "*";
-            LOG(INFO) << "Executing command: " << clearGeneratedFiles;
-            system(clearGeneratedFiles.c_str());
+//            std::string clearGeneratedFiles = std::string("/bin/rm ") + clo.getOutputDirectory() + "*";
+//            LOG(INFO) << "Executing command: " << clearGeneratedFiles;
+//            system(clearGeneratedFiles.c_str());
 
             std::string collectionClassEncodeCommand = clo.getPathToColibri() + " -d " + clo.getOutputDirectory() + " -o "
-                + collectionCorpusFile.getFileName(false) + " -u " + allFileNames;
+                + clo.getCollectionName() + " -u " + allFileNames;
             LOG(INFO) << "Executing command: " << collectionClassEncodeCommand;
             system(collectionClassEncodeCommand.c_str());
 
-	    collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile.getPath());
-	    collectionClassDecoderPtr = new ClassDecoder(collectionCorpusFile.getPath());
+	    collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile);
+	    collectionClassDecoderPtr = new ClassDecoder(collectionCorpusFile);
             collectionIndexedModelPtr = new IndexedPatternModel<>();
             
             LOG(INFO) << "Indexing collection";
-            collectionIndexedModelPtr->train(collectionEncodedFile.getPath(), options);
-            collectionIndexedModelPtr->write(collectionPatternFile.getPath());
+            collectionIndexedModelPtr->train(collectionEncodedFile, options);
+            collectionIndexedModelPtr->write(collectionPatternFile);
 
             LOG(INFO) <<  "- Creating collection files";
 
@@ -399,24 +409,15 @@ int main(int argc, char** argv)
             kneserNeyPtr->recursiveComputeFrequencyStats();
             LOG(INFO) << "- Computing frequency stats for KN";
 
-//		collectionIndexedModelPtr->computestats();
 	    collectionIndexedModelPtr->computecoveragestats(0,1);
 
             LOG(INFO) << "Writing Kneser Ney model to file";
             KneserNeyFactory::writeToFile(*kneserNeyPtr, "alice-kneserney.out", collectionClassDecoderPtr);
-//        } else 
-//        {
-//            collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile.getPath());
-//            collectionClassDecoderPtr = new ClassDecoder(collectionCorpusFile.getPath());
-//            collectionIndexedModelPtr = new IndexedPatternModel<>(collectionPatternFile.getPath(), options); 
-//
-//            LOG(INFO) << "Reading Kneser Ney model from file";
-//            kneserNeyPtr = KneserNeyFactory::readFromFile("alice-kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
         } else // not so fresh run
         {
-            collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile.getPath());
-            collectionClassDecoderPtr = new ClassDecoder(collectionCorpusFile.getPath());
-            collectionIndexedModelPtr = new IndexedPatternModel<>(collectionPatternFile.getPath(), options); 
+            collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile);
+            collectionClassDecoderPtr = new ClassDecoder(collectionCorpusFile);
+            collectionIndexedModelPtr = new IndexedPatternModel<>(collectionPatternFile, options); 
 
 
             LOG(INFO) << "Reading Kneser Ney model from file";

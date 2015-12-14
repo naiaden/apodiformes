@@ -94,14 +94,14 @@ class CommandLineOptions
     std::vector<std::string> testFiles;
 
     public:
-    std::string getCorpusFile() { return corpusFile; }
-    std::string getVocabularyFile() { return vocabularyFile; }
-    std::string getPatternModelFile() { return patternModelFile; }
+    const std::string& getCorpusFile() const { return corpusFile; }
+    const std::string& getVocabularyFile() const { return vocabularyFile; }
+    const std::string& getPatternModelFile() const { return patternModelFile; }
 
-    std::string getInputDirectory() { return inputDirectory; }
-    std::string getOutputDirectory() { return outputDirectory; }
-    std::string getCollectionName() { return collectionName; }
-    std::string getPathToColibri() { return pathToColibri; }
+    const std::string& getInputDirectory() const { return inputDirectory; }
+    const std::string& getOutputDirectory() const { return outputDirectory; }
+    const std::string& getCollectionName() const { return collectionName; }
+    const std::string& getPathToColibri() const { return pathToColibri; }
 
     bool getReverseIndex() { return reverseIndex; }
     bool getDoSkipgrams() { return doSkipgrams; }
@@ -112,8 +112,8 @@ class CommandLineOptions
     bool getOverwriteFiles() { return overwriteFiles; }
     bool getFreshRun() { return freshRun; }
 
-    std::vector<std::string> getInputFiles() { return inputFiles; }
-    std::vector<std::string> getTestFiles() { return testFiles; }
+    const std::vector<std::string>& getInputFiles() const { return inputFiles; }
+    const std::vector<std::string>& getTestFiles() const { return testFiles; }
 
     PatternModelOptions getPatternModelOptions()
     {
@@ -382,7 +382,8 @@ int main(int argc, char** argv)
 
 
 		collectionClassEncoderPtr = new ClassEncoder();
-		collectionClassEncoderPtr->build(clo.getInputFiles(), true, 0); // 0=threshold
+		std::vector<std::string> hoi = clo.getInputFiles();
+		collectionClassEncoderPtr->build(hoi, true, 0); // 0=threshold
 		collectionClassEncoderPtr->save(collectionCorpusFile);
 
 		std::cout << "!!" << collectionEncodedFile << "!!" << std::endl;

@@ -344,19 +344,19 @@ int main(int argc, char** argv)
 	std::string collectionCorpusFile = clo.getVocabularyFile();
 	if(collectionCorpusFile.empty())
 	{
-		collectionCorpusFile = clo.getOutputDirectory() + clo.getCollectionName() + ".coco.cls";
+		collectionCorpusFile = clo.getOutputDirectory() + "/" + clo.getCollectionName() + ".coco.cls";
 	}
 
 	std::string collectionEncodedFile = clo.getCorpusFile();
 	if(collectionEncodedFile.empty())
 	{
-		collectionEncodedFile = clo.getOutputDirectory() + clo.getCollectionName() + ".coco.dat";
+		collectionEncodedFile = clo.getOutputDirectory() + "/" + clo.getCollectionName() + ".coco.dat";
 	}
 
 	std::string collectionPatternFile = clo.getCollectionName();
 	if(collectionPatternFile.empty())
 	{
-		collectionPatternFile = clo.getOutputDirectory() + clo.getCollectionName() + ".coco.model";
+		collectionPatternFile = clo.getOutputDirectory() + "/" + clo.getCollectionName() + ".coco.model";
 	}
 
         LOG(INFO) << "Using corpus file: " << collectionCorpusFile;
@@ -373,12 +373,29 @@ int main(int argc, char** argv)
         {
             std::cout << "Processing " << clo.getInputFiles().size() << " files" << std::endl;
 
-            std::string allFileNames;
-            BOOST_FOREACH( auto f, clo.getInputFiles()) // generate a list of all file names
-            {	
-                allFileNames += f + " ";
-                LOG(INFO) << "Adding to be processed: " << f;
-            }
+//            std::string allFileNames;
+//            BOOST_FOREACH( auto f, clo.getInputFiles()) // generate a list of all file names
+//            {	
+//                allFileNames += f + " ";
+//                LOG(INFO) << "Adding to be processed: " << f;
+//            }
+
+
+		collectionClassEncoderPtr = new ClassEncoder();
+		collectionClassEncoderPtr->build(clo.getInputFiles(), true, 0); // 0=threshold
+		collectionClassEncoderPtr->save(collectionCorpusFile);
+
+		std::cout << "!!" << collectionEncodedFile << "!!" << std::endl;
+
+		for(auto f: clo.getInputFiles())
+		{
+			collectionClassEncoderPtr->encodefile(f, collectionEncodedFile, false, false, false);
+		}
+
+
+
+
+
 
             LOG(INFO) <<  "+ Creating collection files";
             LOG(INFO) <<  "Class encoding collection files...";
@@ -387,12 +404,20 @@ int main(int argc, char** argv)
 //            LOG(INFO) << "Executing command: " << clearGeneratedFiles;
 //            system(clearGeneratedFiles.c_str());
 
-            std::string collectionClassEncodeCommand = clo.getPathToColibri() + " -d " + clo.getOutputDirectory() + " -o "
-                + clo.getCollectionName() + " -u " + allFileNames;
-            LOG(INFO) << "Executing command: " << collectionClassEncodeCommand;
-            system(collectionClassEncodeCommand.c_str());
+//            std::string collectionClassEncodeCommand = clo.getPathToColibri() + " -d " + clo.getOutputDirectory() + " -o "
+//                + clo.getCollectionName() + " -u " + allFileNames;
+//            LOG(INFO) << "Executing command: " << collectionClassEncodeCommand;
+//            system(collectionClassEncodeCommand.c_str());
 
-	    collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile);
+
+
+
+
+
+
+
+
+//	    collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile);
 	    collectionClassDecoderPtr = new ClassDecoder(collectionCorpusFile);
             collectionIndexedModelPtr = new IndexedPatternModel<>();
             

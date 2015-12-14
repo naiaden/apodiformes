@@ -158,7 +158,7 @@ struct KneserNeyFactory
         for(int i = 0; i < oxyosize; ++i)
         {
 		// Pattern(std::istream * in, bool ignoreeol, const unsigned char version, const unsigned char * corpusstart, bool debug)
-            Pattern p(&is, false, 2, false, false);
+            Pattern p(&is, false, 2, nullptr, false);
             std::getline(is, line); std::istringstream iss(line);
             int i1;
             iss >> i1;
@@ -172,7 +172,7 @@ struct KneserNeyFactory
         std::unordered_map<Pattern, int>* contextValues_n1p_oXYZ = new std::unordered_map<Pattern, int>();
         for(int i = 0; i < oxyzsize; ++i)
         {
-            Pattern p(&is, false, 2, false, false);
+            Pattern p(&is, false, 2, nullptr, false);
             std::getline(is, line); std::istringstream iss(line);
             int i1;
             iss >> i1;
@@ -187,7 +187,7 @@ struct KneserNeyFactory
         for(int i = 0; i < contextvaluessize; ++i)
         {
             
-            Pattern p(&is, false, 2, false, false);
+            Pattern p(&is, false, 2, nullptr, false);
 //            std::cout << p.tostring(*classDecoder) << std::endl;
             std::getline(is, line); std::istringstream iss(line);
             int i1, i2, i3;

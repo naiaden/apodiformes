@@ -8,6 +8,23 @@
 #include "Common.h"
 
 #include <sstream>
+#include <iomanip>
+
+#include <iostream>
+
+#include <string>
+#include <fstream>
+
+#include <math.h>
+#include <algorithm>
+#include <boost/algorithm/string/join.hpp>
+
+#include <map>
+
+
+
+#include <stdlib.h>
+
 
 std::string indent(int level, bool timestamp, char indentChar)
 {
@@ -29,3 +46,30 @@ const std::string currentDateTime() {
 
     return buf;
 }
+
+double perplexity(double sum, int instances, int numberOfOOV)
+{       
+        std::cout << "S:" << sum << " #:" << instances << " O:" << numberOfOOV << std::endl;
+        double dInstances = (double) (instances-numberOfOOV);
+        return pow(10, -1.0/dInstances * sum); // 10^(�~H~R1÷4�~W�~H~R5.80288)
+}
+
+std::vector<std::string> split(std::string const &input) {
+    std::istringstream buffer(input);
+    std::vector<std::string> ret{std::istream_iterator<std::string>(buffer),
+                                 std::istream_iterator<std::string>()};
+    return ret;
+}
+
+    std::vector<std::string> tokenizer( const std::string& p_pcstStr, char delim )  {
+        std::vector<std::string> tokens;
+        std::stringstream   mySstream( p_pcstStr );
+        std::string         temp;
+
+        while( getline( mySstream, temp, delim ) ) {
+            tokens.push_back( temp );
+        }
+
+        return tokens;
+    }
+

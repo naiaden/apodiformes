@@ -103,6 +103,7 @@ class CommandLineOptions
     std::string corpusFile = "";
     std::string vocabularyFile = "";
     std::string patternModelFile = "";
+	std::string modelFile = "";
 
     std::string inputDirectory = "/scratch/lonrust/apodiformes/input/";
     std::string outputDirectory = "/scratch/lonrust/apodiformes/generated/";
@@ -126,6 +127,7 @@ class CommandLineOptions
     const std::string& getCorpusFile() const { return corpusFile; }
     const std::string& getVocabularyFile() const { return vocabularyFile; }
     const std::string& getPatternModelFile() const { return patternModelFile; }
+	const std::string& getModelFile() const { return modelFile; }
 
     const std::string& getInputDirectory() const { return inputDirectory; }
     const std::string& getOutputDirectory() const { return outputDirectory; }
@@ -170,6 +172,7 @@ class CommandLineOptions
         "-I, --inputdir       input directory for text files\n"
         "-O, --outputdir      output directory for generated files\n"
         "-m, --model          output model name\n"
+ 	"-M, --modelfile      model file\n"
         "-C, --pathtocolibri  path to colibri classencoder\n"
         "--reverseindex       use reverse index (idk why you would want this)\n"
         "-S, --skipgrams      use skipgrams\n"
@@ -200,7 +203,10 @@ class CommandLineOptions
                }else if(!key.compare("patternmodel"))
                {
                     patternModelFile = value;
-               } else if(!key.compare("inputdir"))
+               } else if(!key.compare("modelfile"))
+		{
+			modelFile = value;
+		}else if(!key.compare("inputdir"))
                {
                     inputDirectory = value;
                }else if(!key.compare("outputdir"))
@@ -284,6 +290,9 @@ class CommandLineOptions
             } else if(strcmp (argv[argnr],"-p") == 0 || strcmp (argv[argnr],"--patternmodel") == 0)
             {
                 patternModelFile = std::string(argv[++argnr]);
+            } else if(strcmp (argv[argnr],"-M") == 0 || strcmp (argv[argnr],"--modelfile") == 0)
+            {
+                modelFile = std::string(argv[++argnr]);
             } else if(strcmp (argv[argnr],"-I") == 0 || strcmp (argv[argnr],"--inputdir") == 0)
             {
                 inputDirectory = std::string(argv[++argnr]);
@@ -366,6 +375,7 @@ class CommandLineOptions
             std::cerr << "Provide a collection name with -m. Run again with " << applicationName << " --help for more info" << std::endl;
             exit(1);
         }
+
     }
 };
 
@@ -394,6 +404,12 @@ int main(int argc, char** argv)
 	if(collectionPatternFile.empty())
 	{
 		collectionPatternFile = clo.getOutputDirectory() + "/" + clo.getCollectionName() + ".coco.model";
+	}
+
+	std::string modelFile = clo.getCollectionName();
+	 if(modelFile.empty()) 
+	{
+		 modelFile = clo.getCollectionName() + ".mkn." + std::to_string(clo.getMaxLength()) + ".model";
 	}
 
         LOG(INFO) << "Using corpus file: " << collectionCorpusFile;
@@ -442,7 +458,7 @@ int main(int argc, char** argv)
 	    collectionIndexedModelPtr->computecoveragestats(0,1);
 
             LOG(INFO) << "Writing Kneser Ney model to file";
-            KneserNeyFactory::writeToFile(*kneserNeyPtr, "alice-kneserney.out", collectionClassDecoderPtr);
+            KneserNeyFactory::writeToFile(*kneserNeyPtr, modelFile, collectionClassDecoderPtr);
         } else // not so fresh run
         {
             collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile);
@@ -451,7 +467,7 @@ int main(int argc, char** argv)
 
 
             LOG(INFO) << "Reading Kneser Ney model from file";
-            kneserNeyPtr = KneserNeyFactory::readFromFile("alice-kneserney.out", collectionIndexedModelPtr, collectionClassDecoderPtr);
+            kneserNeyPtr = KneserNeyFactory::readFromFile(modelFile, collectionIndexedModelPtr, collectionClassDecoderPtr);
 
         }
 
@@ -461,13 +477,17 @@ int main(int argc, char** argv)
         int numberOfOOV = 0;
         double totalLogProb = 0.0;
 
-        for(const auto& f: clo.getTestFiles())
-        {
-            collectionClassEncoderPtr->encodefile(f, "TESTING.dat", 1, 0, 0, 1);
-        }
-        collectionClassEncoderPtr->save("TESTING.cls");
-        collectionClassDecoderPtr->load("TESTING.cls");
-	
+	{ 
+		std::string testOutputDatFile = clo.getOutputDirectory() + "/" + clo.getCollectionName() + ".test.coco.dat";
+		std::string testOutputClsFile = clo.getOutputDirectory() + "/" + clo.getCollectionName() + ".test.coco.cls";
+		for(const auto& f: clo.getTestFiles())
+		{
+		    collectionClassEncoderPtr->encodefile(f, testOutputDatFile, 1, 0, 0, 1);
+		}
+		collectionClassEncoderPtr->save(testOutputClsFile);
+		collectionClassDecoderPtr->load(testOutputClsFile);
+	}	
+
 	ProbsWriter* probsOut = nullptr;
 	if(clo.getWriteProbsFile().empty())
 	{

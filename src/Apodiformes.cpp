@@ -70,14 +70,14 @@ inline std::string trim(const std::string &s)
 class ProbsWriter
 {
 	public:
-	virtual void write(const std::string& s, bool noNewLine = true) = 0;
+	virtual void write(const std::string& s, bool newLine = false) = 0;
 };
 
 class ProbsScreenWriter : public ProbsWriter
 {
 	public:
 	ProbsScreenWriter() {}
-	virtual void write(const std::string& s, bool noNewLine = true) { std::cout << s << (noNewLine ? "" : "\n"); }
+	void write(const std::string& s, bool newLine = false) { std::cout << s << (newLine ? "\n" : ""); }
 };
 
 class ProbsFileWriter : public ProbsWriter
@@ -92,7 +92,7 @@ class ProbsFileWriter : public ProbsWriter
 	{
 		os.close();
 	}
-	virtual void write(const std::string& s, bool noNewLine = true) { os << s << (noNewLine ? "" : "\n"); }	
+	void write(const std::string& s, bool newLine = false) { os << s << (newLine ? "\n" : ""); }	
 };
 
 class CommandLineOptions
@@ -410,52 +410,19 @@ int main(int argc, char** argv)
         {
             std::cout << "Processing " << clo.getInputFiles().size() << " files" << std::endl;
 
-//            std::string allFileNames;
-//            BOOST_FOREACH( auto f, clo.getInputFiles()) // generate a list of all file names
-//            {	
-//                allFileNames += f + " ";
-//                LOG(INFO) << "Adding to be processed: " << f;
-//            }
-
-
 		collectionClassEncoderPtr = new ClassEncoder();
-		std::vector<std::string> hoi = clo.getInputFiles();
-		collectionClassEncoderPtr->build(hoi, true, 0); // 0=threshold
+		std::vector<std::string> inputFiles = clo.getInputFiles();
+		collectionClassEncoderPtr->build(inputFiles, true, 0); // 0=threshold
 		collectionClassEncoderPtr->save(collectionCorpusFile);
-
-		std::cout << "!!" << collectionEncodedFile << "!!" << std::endl;
 
 		for(auto f: clo.getInputFiles())
 		{
 			collectionClassEncoderPtr->encodefile(f, collectionEncodedFile, false, false, false);
 		}
 
-
-
-
-
-
             LOG(INFO) <<  "+ Creating collection files";
             LOG(INFO) <<  "Class encoding collection files...";
 
-//            std::string clearGeneratedFiles = std::string("/bin/rm ") + clo.getOutputDirectory() + "*";
-//            LOG(INFO) << "Executing command: " << clearGeneratedFiles;
-//            system(clearGeneratedFiles.c_str());
-
-//            std::string collectionClassEncodeCommand = clo.getPathToColibri() + " -d " + clo.getOutputDirectory() + " -o "
-//                + clo.getCollectionName() + " -u " + allFileNames;
-//            LOG(INFO) << "Executing command: " << collectionClassEncodeCommand;
-//            system(collectionClassEncodeCommand.c_str());
-
-
-
-
-
-
-
-
-
-//	    collectionClassEncoderPtr = new ClassEncoder(collectionCorpusFile);
 	    collectionClassDecoderPtr = new ClassDecoder(collectionCorpusFile);
             collectionIndexedModelPtr = new IndexedPatternModel<>();
             
@@ -573,16 +540,15 @@ for(int i = 1/*(options.MAXLENGTH-1)*/; i < words.size(); ++i)
                         {
                             focusString = words[i];
                             
-                            std::cout << "*** ";
+                            probsOut->write("*** ");
                             ++numberOfOOV;
                             prob = 0.0;
                             logProb = 0.0;
                         }
                         totalLogProb += logProb;
-                        //std::cout << "p(" << focus.tostring(*collectionClassDecoderPtr) << "|";
-                        std::cout << "p(" << focusString << "|";
-                        std::cout << context.tostring(*collectionClassDecoderPtr) << "): ";
-                        std::cout << prob << " [" << logProb << "]" << std::endl;
+                        probsOut->write("p(" + focusString + "|");
+                        probsOut->write(context.tostring(*collectionClassDecoderPtr) + "): ");
+                        probsOut->write(std::to_string(prob) + " [" + std::to_string(logProb) + "]", true);
                     }
                 }
             }

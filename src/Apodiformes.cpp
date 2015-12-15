@@ -67,6 +67,34 @@ inline std::string trim(const std::string &s)
       return std::string(wsfront,std::find_if_not(s.rbegin(),std::string::const_reverse_iterator(wsfront),[](int c){return std::isspace(c);}).base());
 }
 
+class ProbsWriter
+{
+	public:
+	virtual void write(const std::string& s, bool noNewLine = true) = 0;
+};
+
+class ProbsScreenWriter : public ProbsWriter
+{
+	public:
+	ProbsScreenWriter() {}
+	virtual void write(const std::string& s, bool noNewLine = true) { std::cout << s << (noNewLine ? "" : "\n"); }
+};
+
+class ProbsFileWriter : public ProbsWriter
+{
+	std::ofstream os;
+	public:
+	ProbsFileWriter(const std::string& fileName) 
+	{
+		os.open(fileName);
+	}
+	~ProbsFileWriter()
+	{
+		os.close();
+	}
+	virtual void write(const std::string& s, bool noNewLine = true) { os << s << (noNewLine ? "" : "\n"); }	
+};
+
 class CommandLineOptions
 {
     private:
@@ -78,6 +106,7 @@ class CommandLineOptions
 
     std::string inputDirectory = "/scratch/lonrust/apodiformes/input/";
     std::string outputDirectory = "/scratch/lonrust/apodiformes/generated/";
+	std::string writeProbsFile = "";
     std::string collectionName = "";
     std::string pathToColibri = "~/Software/colibri-core/src/colibri-classencode";
 
@@ -100,6 +129,7 @@ class CommandLineOptions
 
     const std::string& getInputDirectory() const { return inputDirectory; }
     const std::string& getOutputDirectory() const { return outputDirectory; }
+    const std::string& getWriteProbsFile() const { return writeProbsFile; }
     const std::string& getCollectionName() const { return collectionName; }
     const std::string& getPathToColibri() const { return pathToColibri; }
 
@@ -136,6 +166,7 @@ class CommandLineOptions
         "-c, --corpus         colibri corpus file\n"
         "-v, --vocabulary     colibri class file\n"
         "-p, --patternmodel   colibri pattern model file\n"
+	"-w, --writeprobs     write probs to file, default is to stdout\n"
         "-I, --inputdir       input directory for text files\n"
         "-O, --outputdir      output directory for generated files\n"
         "-m, --model          output model name\n"
@@ -202,7 +233,10 @@ class CommandLineOptions
                }else if(!key.compare("overwrite"))
                {
                     overwriteFiles = value.compare("true") ? false : true;
-               }else if(!key.compare("inputfile"))
+               } else if(!key.compare("writeprobs"))
+		{
+			writeProbsFile = value;
+		} else if(!key.compare("inputfile"))
                {
                     inputFiles.push_back(value);
                }else if(!key.compare("inputfiles"))
@@ -271,7 +305,10 @@ class CommandLineOptions
             } else if(strcmp (argv[argnr],"-T") == 0 || strcmp (argv[argnr],"--mintokens") == 0)
             {
                 minTokens = atoi(argv[++argnr]);
-            } else if(strcmp (argv[argnr],"-o") == 0 || strcmp (argv[argnr],"--order") == 0)
+            } else if(strcmp(argv[argnr],"-w") == 0 || strcmp(argv[argnr], "--writeprobs") == 0)
+		{
+			writeProbsFile = std::string(argv[++argnr]);
+		} else if(strcmp (argv[argnr],"-o") == 0 || strcmp (argv[argnr],"--order") == 0)
             {
                 maxLength = atoi(argv[++argnr]);
             }  else if(strcmp (argv[argnr],"--config") == 0)
@@ -463,6 +500,15 @@ int main(int argc, char** argv)
         }
         collectionClassEncoderPtr->save("TESTING.cls");
         collectionClassDecoderPtr->load("TESTING.cls");
+	
+	ProbsWriter* probsOut = nullptr;
+	if(clo.getWriteProbsFile().empty())
+	{
+		probsOut = new ProbsScreenWriter();
+	} else 
+	{
+		probsOut = new ProbsFileWriter(clo.getWriteProbsFile());
+	}
 
         for(const auto& f: clo.getTestFiles())
         {

@@ -1,6 +1,8 @@
 #ifndef COMMANDLINEOPTIONS_H
 #define COMMANDLINEOPTIONS_H
 
+#include "Common.h"
+
 class CommandLineOptions
 {
     private:

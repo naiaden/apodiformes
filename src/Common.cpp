@@ -51,7 +51,7 @@ double perplexity(double sum, int instances, int numberOfOOV)
 {       
         std::cout << "S:" << sum << " #:" << instances << " O:" << numberOfOOV << std::endl;
         double dInstances = (double) (instances-numberOfOOV);
-        return pow(10, -1.0/dInstances * sum); // 10^(�~H~R1÷4�~W�~H~R5.80288)
+        return pow(10, -1.0/dInstances * sum); 
 }
 
 std::vector<std::string> split(std::string const &input) {
